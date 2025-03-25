@@ -19,6 +19,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0",
+    "react-virtuoso": "^4.12.5",
+    "recharts": "^2.15.1",
     "styled-components": "^6.1.16"
   },
   "devDependencies": {

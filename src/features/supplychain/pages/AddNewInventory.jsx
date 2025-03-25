@@ -44,7 +44,7 @@ const AddNewInventory = () => {
         const response = await axios.get(`${apiUrl}/api/vendors`);
         console.log("Fetched vendors:", response.data);
 
-        // ✅ Ensure response is an array
+        //  Ensure response is an array
         setVendors(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching vendors:", error);
