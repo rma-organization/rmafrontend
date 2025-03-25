@@ -16,7 +16,7 @@ import {
   CircularProgress,
   Pagination,
 } from "@mui/material";
-//import { listRequests } from "../services/InventoryServices";
+import { listRequests } from "../../../services/api/InventoryServices";
 import { Link } from "react-router-dom";
 
 const ListRequestsComponent = () => {
