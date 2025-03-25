@@ -14,14 +14,14 @@ const MainLayout = () => {
       {/* Main Content Area */}
       <Box flexGrow={1} display="flex" flexDirection="column">
         {/* Navbar */}
-        <Box height="64px">
+        <Box height="64px" width="calc(100vw - 320px)">
           {/* You can include NavBar here */}
           {/* <NavBar /> */}
         </Box>
 
         {/* Page Content */}
         <Box flexGrow={1} padding={2} bgcolor="Snow">
-          <Outlet /> {/* This is where nested routes will be rendered */}
+          <Outlet /> {/* Nested Routes Render Here */}
         </Box>
       </Box>
     </Box>
