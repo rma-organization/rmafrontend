@@ -15,6 +15,10 @@ import HomePage from "./features/engineer/pages/HomePage";
 import RequestPage from "./features/engineer/pages/RequestPage";
 import StatusPage from "./features/engineer/pages/StatusPage";
 
+import AddCustomer from "./features/admin/pages/AddCustomer";
+
+
+
 function App() {
   return (
     <div className="app-container">
@@ -40,6 +44,7 @@ function App() {
             {/* Request and Status Pages */}
             <Route path="RequestPage" element={<RequestPage />} />
             <Route path="StatusPage" element={<StatusPage />} />
+            <Route path="AddCustomer" element={<AddCustomer />} />
           </Route>
         </Routes>
       </Router>
