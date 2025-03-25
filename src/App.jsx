@@ -14,7 +14,8 @@ import InventoryDetailsShow from "./features/supplychain/pages/InventoryDetailsS
 import HomePage from "./features/engineer/pages/HomePage";
 import RequestPage from "./features/engineer/pages/RequestPage";
 import StatusPage from "./features/engineer/pages/StatusPage";
-
+import PartRequestManagementRMA from "./features/rma/pages/PartRequestManagementRMA";
+import RMAHomePage from "./features/rma/pages/RMAHomePage";
 function App() {
   return (
     <div className="app-container">
@@ -40,6 +41,8 @@ function App() {
             {/* Request and Status Pages */}
             <Route path="RequestPage" element={<RequestPage />} />
             <Route path="StatusPage" element={<StatusPage />} />
+            <Route path="PartRequestManagementRMA" element={<PartRequestManagementRMA/>} />
+            <Route path="RMAHomePage" element={<RMAHomePage/>} />
           </Route>
         </Routes>
       </Router>
