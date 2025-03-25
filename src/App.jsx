@@ -11,28 +11,40 @@ import SuccessfullyAddInventory from "./features/supplychain/pages/SuccessfullyA
 import RequestDetailShow from "./features/supplychain/pages/RequestDetailShow"; 
 import InventoryDetailsShow from "./features/supplychain/pages/InventoryDetailsShow"; 
 
+import HomePage from "./features/engineer/pages/HomePage";
+import RequestPage from "./features/engineer/pages/RequestPage";
+import StatusPage from "./features/engineer/pages/StatusPage";
 
 function App() {
   return (
     <div className="app-container">
       <Router>
         <Routes>
+          {/* Wrap all pages inside MainLayout */}
           <Route path="/" element={<MainLayout />}>
-          <Route path="AddNewInventory" element={<AddNewInventory />} />
-          <Route path="ListInventoryComponent" element={<ListInventoryComponent />} />
-          <Route path="InventoryManagement" element={<InventoryManagement />} />
-          <Route path="SupplyChainHomePage" element={<SupplyChainHomePage />} />
-          <Route path="EditInventory" element={<EditInventory />} />
-          <Route path="SuccessfullyAddInventory" element={<SuccessfullyAddInventory />} />
-          <Route path="RequestDetailShow" element={<RequestDetailShow />} />
-          <Route path="showInventory/:id" element={<InventoryDetailsShow />} />
-          <Route path="edit/:id" element={<EditInventory />} />
-          <Route path="show/:id" element={<RequestDetailShow />} />
+            {/* Default Home Page */}
+            <Route index element={<HomePage />} />
+  
+            {/* Inventory Management Routes */}
+            <Route path="AddNewInventory" element={<AddNewInventory />} />
+            <Route path="ListInventoryComponent" element={<ListInventoryComponent />} />
+            <Route path="InventoryManagement" element={<InventoryManagement />} />
+            <Route path="SupplyChainHomePage" element={<SupplyChainHomePage />} />
+            <Route path="EditInventory" element={<EditInventory />} />
+            <Route path="SuccessfullyAddInventory" element={<SuccessfullyAddInventory />} />
+            <Route path="RequestDetailShow" element={<RequestDetailShow />} />
+            <Route path="showInventory/:id" element={<InventoryDetailsShow />} />
+            <Route path="edit/:id" element={<EditInventory />} />
+            <Route path="show/:id" element={<RequestDetailShow />} />
+  
+            {/* Request and Status Pages */}
+            <Route path="RequestPage" element={<RequestPage />} />
+            <Route path="StatusPage" element={<StatusPage />} />
           </Route>
         </Routes>
       </Router>
     </div>
-  );
+  );  
 }
 
 export default App;

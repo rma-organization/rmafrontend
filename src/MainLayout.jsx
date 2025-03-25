@@ -1,8 +1,6 @@
-// MainLayout.jsx
 import React from "react";
 import { Box } from "@mui/material";
 import Sidebar from "./components/navbar/Sidebar";
-// import NavBar from "./component/NavBar/NavBar";
 import { Outlet } from "react-router-dom";
 
 const MainLayout = () => {
