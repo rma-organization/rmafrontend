@@ -16,6 +16,7 @@ import RequestPage from "./features/engineer/pages/RequestPage";
 import StatusPage from "./features/engineer/pages/StatusPage";
 
 import AddVendor from "./features/admin/pages/AddVendor";
+import AddCustomer from "./features/admin/pages/AddCustomer";
 
 
 
@@ -45,6 +46,7 @@ function App() {
             <Route path="RequestPage" element={<RequestPage />} />
             <Route path="StatusPage" element={<StatusPage />} />
             <Route path="AddVendor" element={<AddVendor />} />
+            <Route path="AddCustomer" element={<AddCustomer />} />
           </Route>
         </Routes>
       </Router>
