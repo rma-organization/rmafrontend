@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -13,31 +13,43 @@ import {
   Pagination,
 } from "@mui/material";
 import { TableVirtuoso } from "react-virtuoso";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // Columns configuration
 const columns = [
   { width: 25, label: "ID", dataKey: "id" },
-  { width: 150, label: "Name", dataKey: "name" },
+  { width: 150, label: "Name", dataKey: "username" }, // Changed from 'name' to 'username'
   { width: 120, label: "Email", dataKey: "email" },
-  { width: 100, label: "Role", dataKey: "role" },
-  { width: 200, label: "Action", dataKey: "action" },
+  { width: 100, label: "Role", dataKey: "roles" }, // 'roles' is an array, needs special handling
+  { width: 150, label: "Approval Status", dataKey: "approvalStatus" },
 ];
 
 const ManageUser = () => {
   const [page, setPage] = useState(1);
+  const [users, setUsers] = useState([]);
   const itemsPerPage = 10;
   const navigate = useNavigate();
 
-  // Sample static data for front-end only
-  
-  const manageUser = [
-  { id: 1, name: "", email: "", role: ["Supply-Chain"] },
-  { id: 2, name: "", email: "", role: ["User", "Engineer"] },
-  { id: 3, name: "", email: "", role: ["Super Admin", "Engineer"] },
-  { id: 4, name: "", email: "", role: ["Engineer"] },
-  { id: 5, name: "", email: "", role: ["User"] },
-];
+  // Bearer token for authentication
+  const bearerToken = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJuZXd1c2VyIiwiaWF0IjoxNzQyOTg3NjQ2LCJleHAiOjE3NDMwMjM2NDZ9.8zawyzLeXZK0weg05fM7s4kJwpxN5iiA0ibBKL8dm_E";
+
+  // Fetch users dynamically
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:8081/api/auth/users", {
+          headers: {
+            "Authorization": bearerToken, // Add Bearer token for authentication
+          },
+        });
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   // Pagination handler
   const handlePageChange = (_event, newPage) => {
@@ -45,12 +57,7 @@ const ManageUser = () => {
   };
 
   // Paginate data
-  const paginatedData = manageUser.slice((page - 1) * itemsPerPage, page * itemsPerPage);
-
-  // Handle actions
-  const handleEdit = (row) => navigate(`/edit/${row.id}`);
-  const handleShow = (row) => navigate(`/show/${row.id}`);
-  const handleDelete = (row) => console.log("Delete", row);
+  const paginatedData = users.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   // Custom Table Components for react-virtuoso
   const VirtuosoTableComponents = {
@@ -85,38 +92,14 @@ const ManageUser = () => {
     <>
       {columns.map((column) => (
         <TableCell key={column.dataKey} align="left">
-          {column.dataKey === "action" ? (
-            <Box display="flex" gap={1}>
-              <Button
-                variant="text"
-                sx={{ color: "white", bgcolor: "primary.main" }}
-                component={Link}
-                to={`/edit/${row.id}`}
-              >
-                Edit
-              </Button>
-
-              <Button
-                variant="contained"
-                sx={{ bgcolor: "yellow", color: "black" }}
-                component={Link}
-                to={`/show/${row.id}`}
-              >
-                Show
-              </Button>
-
-              <Button
-                variant="outlined"
-                sx={{ color: "white", borderColor: "error.main", bgcolor: "error.main" }}
-                onClick={() => handleDelete(row)}
-              >
-                Delete
-              </Button>
-            </Box>
-          ) : row[column.dataKey] !== undefined && row[column.dataKey] !== null ? (
-            String(row[column.dataKey])
+          {column.dataKey === "roles" ? (
+            row[column.dataKey].join(", ") // Displaying roles as a comma-separated list
           ) : (
-            "N/A"
+            row[column.dataKey] !== undefined && row[column.dataKey] !== null ? (
+              String(row[column.dataKey])
+            ) : (
+              "N/A"
+            )
           )}
         </TableCell>
       ))}
@@ -125,21 +108,9 @@ const ManageUser = () => {
 
   return (
     <Box p={2} mt={1}>
-      <Button variant="contained" disableElevation component={Link} to="/">
-        Home
-      </Button>
+      <Button variant="contained" disableElevation onClick={() => navigate("/")}>Home</Button>
 
       <Box bgcolor="lightgray" p={1} mt={5} borderRadius={1}>
-        <Button
-          variant="contained"
-          disableElevation
-          sx={{ backgroundColor: "success.main", "&:hover": { backgroundColor: "darkgreen" } }}
-          component={Link}
-          to="/add-user"
-        >
-          Add New User
-        </Button>
-
         <Typography variant="h6" fontWeight="bold" color="black" mt={4}>
           Manage User
         </Typography>
@@ -154,7 +125,7 @@ const ManageUser = () => {
 
           <Box display="flex" justifyContent="flex-end" mt={2} p={2}>
             <Pagination
-              count={Math.ceil(manageUser.length / itemsPerPage)}
+              count={Math.ceil(users.length / itemsPerPage)}
               page={page}
               onChange={handlePageChange}
               color="primary"
@@ -167,3 +138,4 @@ const ManageUser = () => {
 };
 
 export default ManageUser;
+
