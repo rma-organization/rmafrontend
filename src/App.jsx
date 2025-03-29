@@ -10,6 +10,7 @@ import EditInventory from "./features/supplychain/pages/EditInventory";
 import SuccessfullyAddInventory from "./features/supplychain/pages/SuccessfullyAddInventory";
 import RequestDetailShow from "./features/supplychain/pages/RequestDetailShow"; 
 import InventoryDetailsShow from "./features/supplychain/pages/InventoryDetailsShow"; 
+import AddUser from "./features/admin/pages/AddUser";
 
 import HomePage from "./features/engineer/pages/HomePage";
 import RequestPage from "./features/engineer/pages/RequestPage";
@@ -45,6 +46,7 @@ function App() {
             {/* Request and Status Pages */}
             <Route path="RequestPage" element={<RequestPage />} />
             <Route path="StatusPage" element={<StatusPage />} />
+            <Route path="AddUser" element={<AddUser />} />
             <Route path="PartRequestManagementRMA" element={<PartRequestManagementRMA/>} />
             <Route path="RMAHomePage" element={<RMAHomePage/>} />
             <Route path="AddVendor" element={<AddVendor />} />
