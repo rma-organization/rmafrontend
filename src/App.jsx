@@ -10,11 +10,18 @@ import EditInventory from "./features/supplychain/pages/EditInventory";
 import SuccessfullyAddInventory from "./features/supplychain/pages/SuccessfullyAddInventory";
 import RequestDetailShow from "./features/supplychain/pages/RequestDetailShow"; 
 import InventoryDetailsShow from "./features/supplychain/pages/InventoryDetailsShow"; 
+import AddUser from "./features/admin/pages/AddUser";
 
 import HomePage from "./features/engineer/pages/HomePage";
 import RequestPage from "./features/engineer/pages/RequestPage";
 import StatusPage from "./features/engineer/pages/StatusPage";
 import ManageUser from "./features/admin/pages/ManageUser";
+import PartRequestManagementRMA from "./features/rma/pages/PartRequestManagementRMA";
+import RMAHomePage from "./features/rma/pages/RMAHomePage";
+
+import AddVendor from "./features/admin/pages/AddVendor";
+import AddCustomer from "./features/admin/pages/AddCustomer";
+
 function App() {
   return (
     <div className="app-container">
@@ -41,6 +48,11 @@ function App() {
             <Route path="RequestPage" element={<RequestPage />} />
             <Route path="StatusPage" element={<StatusPage />} />
             <Route path="ManageUser" element={<ManageUser />} />
+            <Route path="AddUser" element={<AddUser />} />
+            <Route path="PartRequestManagementRMA" element={<PartRequestManagementRMA/>} />
+            <Route path="RMAHomePage" element={<RMAHomePage/>} />
+            <Route path="AddVendor" element={<AddVendor />} />
+            <Route path="AddCustomer" element={<AddCustomer />} />
           </Route>
         </Routes>
       </Router>

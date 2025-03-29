@@ -17,9 +17,9 @@ import {
   Pagination,
 } from "@mui/material";
 import { listRequests } from "../../../services/api/InventoryServices";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-const ListRequestsComponent = () => {
+const PartRequestManagementRMA = () => {
   const [requests, setRequests] = useState([]);
   const [editRowId, setEditRowId] = useState(null);
   const [tempStatus, setTempStatus] = useState({});
@@ -27,39 +27,37 @@ const ListRequestsComponent = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const rowsPerPage = 10;
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         const data = await listRequests();
         setRequests(data);
-        setLoading(false);
       } catch (error) {
         setError("Error fetching requests.");
-        setLoading(false);
         console.error("Error fetching requests:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchRequests();
   }, []);
 
+  // Only allow editing if the status is "Faulty Returned"
   const handleEdit = (row) => {
-    setEditRowId(row.id);
-    // Set the temporary status when you click Edit
-    setTempStatus((prev) => ({ ...prev, [row.id]: row.status || "Requested" }));
+    if (row.status === "Faulty Returned") {
+      setEditRowId(row.id);
+      setTempStatus((prev) => ({ ...prev, [row.id]: row.status }));
+    }
   };
 
   const handleSave = async (rowId) => {
-    const updatedStatus = tempStatus[rowId];
-
-    if (!updatedStatus) {
-      setError("Status is required to update.");
-      return;
-    }
-
     try {
-      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
+      const updatedStatus = tempStatus[rowId];
+      const response = await fetch('http://localhost:8080/api/requests/${rowId}', {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: updatedStatus }),
@@ -75,37 +73,26 @@ const ListRequestsComponent = () => {
       setEditRowId(null);
       setSuccessMessage("Request updated successfully!");
     } catch (error) {
-      setError("Error updating request.");
       console.error("Error updating request:", error);
     }
   };
 
-  const handleDelete = async (rowId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this request?")) return;
-
-    try {
-      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete request.");
-      }
-
-      setRequests((prevRequests) => prevRequests.filter((req) => req.id !== rowId));
-      setSuccessMessage("Request deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting request:", error);
-    }
+  const handleShow = (rowId) => {
+    navigate('/show/${rowId}');
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
+    return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
   };
 
   const handleCloseSnackbar = () => setSuccessMessage(null);
-  const handlePageChange = (event, newPage) => setPage(newPage);
+
+  const handlePageChange = (_, newPage) => {
+    setPage(newPage);
+  };
+
+  const paginatedRequests = requests.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const totalPages = Math.ceil(requests.length / rowsPerPage);
 
   const statusStyles = {
     Approved: { backgroundColor: "#28a745", color: "#fff" },
@@ -116,48 +103,23 @@ const ListRequestsComponent = () => {
     "Faulty Returned": { backgroundColor: "#ff9800", color: "#fff" },
     Collected: { backgroundColor: "#17a2b8", color: "#fff" },
     Rejected: { backgroundColor: "#dc3545", color: "#fff" },
-    Completed: { backgroundColor: "#c46210", color: "#fff" },
-  };
-
-  // Define valid transitions for each status
-  const validTransitions = {
-    "At Office": ["Collected", "Faulty Returned"],
-    Requested: [],
-    Collected: [],
-    "Faulty Returned": [],
-    Approved: [],
-    Declined: [],
-    Rejected: [],
+    Completed: { backgroundColor: "#4caf50", color: "#fff" }, // New style for Completed
   };
 
   return (
     <>
-      {/* <Snackbar
+      <Snackbar
         open={Boolean(successMessage)}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         message={successMessage}
-      /> */}
+      />
       <Box p={2} mt={10}>
-        <Button variant="contained" component={Link} to="/" sx={{ mb: 3 }}>
+        <Button variant="contained" component={Link} to="/RMAHomePage">
           Home
         </Button>
 
-        <Box bgcolor="lightgray" p={2} mt={3} borderRadius={1}>
-          <Button
-            variant="contained"
-            disableElevation
-            sx={{
-              backgroundColor: "success.main",
-              "&:hover": { backgroundColor: "darkgreen" },
-              mb: 2,
-            }}
-            component={Link}
-            to="/RequestPage"
-          >
-            Request New Part
-          </Button>
-
+        <Box bgcolor="lightgray" p={2} mt={10} borderRadius={1}>
           <Typography variant="h6" fontWeight="bold" color="black" mt={4}>
             Requests List
           </Typography>
@@ -169,24 +131,23 @@ const ListRequestsComponent = () => {
               {error}
             </Typography>
           ) : (
-            <Paper sx={{ width: "100%", overflow: "hidden", mt: 2 }}>
-              <TableContainer sx={{ maxHeight: 500 }}>
-                <Table stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Part ID</TableCell>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Created At</TableCell>
-                      <TableCell>Updated At</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {requests
-                      .slice((page - 1) * rowsPerPage, page * rowsPerPage)
-                      .map((row) => (
+            <>
+              <Paper style={{ width: "100%", marginTop: 20 }}>
+                <TableContainer sx={{ maxHeight: 500 }}>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Part ID</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Created At</TableCell>
+                        <TableCell>Updated At</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedRequests.map((row) => (
                         <TableRow key={row.id}>
                           <TableCell>{row.id}</TableCell>
                           <TableCell>{row.partId}</TableCell>
@@ -197,30 +158,22 @@ const ListRequestsComponent = () => {
                             {editRowId === row.id ? (
                               <Select
                                 value={tempStatus[row.id] || ""}
-                                onChange={(e) => {
-                                  const newStatus = e.target.value;
-                                  setTempStatus((prev) => ({
-                                    ...prev,
-                                    [row.id]: newStatus,
-                                  }));
-                                }}
+                                onChange={(e) =>
+                                  setTempStatus({ ...tempStatus, [row.id]: e.target.value })
+                                }
                                 fullWidth
                                 size="small"
                               >
-                                {/* Dynamically set the allowed status based on current status */}
-                                {validTransitions[row.status]?.map((status) => (
-                                  <MenuItem key={status} value={status}>
-                                    {status}
-                                  </MenuItem>
-                                ))}
+                                <MenuItem value="Completed">Completed</MenuItem>
                               </Select>
                             ) : (
                               <Box
                                 sx={{
-                                  ...statusStyles[row.status] || {},
-                                  padding: "5px 10px",
-                                  borderRadius: "5px",
-                                  textAlign: "center",
+                                  backgroundColor: statusStyles[row.status]?.backgroundColor || "#ccc",
+                                  color: statusStyles[row.status]?.color || "#000",
+                                  padding: "4px 8px",
+                                  borderRadius: "4px",
+                                  display: "inline-block",
                                 }}
                               >
                                 {row.status}
@@ -238,40 +191,42 @@ const ListRequestsComponent = () => {
                               </Button>
                             ) : (
                               <Box display="flex" gap={1}>
+                                {row.status === "Faulty Returned" && (
+                                  <Button
+                                    variant="contained"
+                                    color="warning"
+                                    onClick={() => handleEdit(row)}
+                                  >
+                                    Edit
+                                  </Button>
+                                )}
                                 <Button
                                   variant="contained"
-                                  color="warning"
-                                  onClick={() => handleEdit(row)}
+                                  color="info"
+                                  onClick={() => handleShow(row.id)}
                                 >
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="contained"
-                                  color="error"
-                                  onClick={() => handleDelete(row.id)}
-                                >
-                                  Delete
+                                  Show
                                 </Button>
                               </Box>
                             )}
                           </TableCell>
                         </TableRow>
                       ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
 
-              {/* Pagination */}
               <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
                 <Pagination
-                  count={Math.ceil(requests.length / rowsPerPage)}
+                  count={totalPages}
                   page={page}
                   onChange={handlePageChange}
                   shape="rounded"
                   color="primary"
                 />
               </Box>
-            </Paper>
+            </>
           )}
         </Box>
       </Box>
@@ -279,4 +234,4 @@ const ListRequestsComponent = () => {
   );
 };
 
-export default ListRequestsComponent;
+export default PartRequestManagementRMA;
