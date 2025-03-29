@@ -15,6 +15,7 @@ import AddUser from "./features/admin/pages/AddUser";
 import HomePage from "./features/engineer/pages/HomePage";
 import RequestPage from "./features/engineer/pages/RequestPage";
 import StatusPage from "./features/engineer/pages/StatusPage";
+import ManageUser from "./features/admin/pages/ManageUser";
 import PartRequestManagementRMA from "./features/rma/pages/PartRequestManagementRMA";
 import RMAHomePage from "./features/rma/pages/RMAHomePage";
 
@@ -46,6 +47,7 @@ function App() {
             {/* Request and Status Pages */}
             <Route path="RequestPage" element={<RequestPage />} />
             <Route path="StatusPage" element={<StatusPage />} />
+            <Route path="ManageUser" element={<ManageUser />} />
             <Route path="AddUser" element={<AddUser />} />
             <Route path="PartRequestManagementRMA" element={<PartRequestManagementRMA/>} />
             <Route path="RMAHomePage" element={<RMAHomePage/>} />
