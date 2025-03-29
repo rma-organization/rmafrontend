@@ -14,7 +14,7 @@ import "./App.css";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser ] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +23,7 @@ function App() {
 
     if (storedToken && storedRole) {
       console.log("Restoring User:", { token: storedToken, role: storedRole });
-      setUser({ token: storedToken, role: storedRole });
+      setUser ({ token: storedToken, role: storedRole });
     }
   }, []);
 
@@ -31,7 +31,7 @@ function App() {
     const { token, role } = loginData;
     localStorage.setItem("token", token);
     localStorage.setItem("role", role);
-    setUser({ role, token });
+    setUser ({ role, token });
 
     // Navigate based on the user's role
     switch (role) {
@@ -56,7 +56,7 @@ function App() {
     console.log("Logging out...");
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    setUser(null);
+    setUser (null);
     navigate("/login");
   };
 
