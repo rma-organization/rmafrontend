@@ -23,7 +23,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:8080/requests");
+        const response = await fetch("http://localhost:8080/api/requests");
         const data = await response.json();
 
         if (data.length === 0) return;
