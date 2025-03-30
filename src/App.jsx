@@ -64,7 +64,7 @@ function App() {
         navigate("/admin-home");
         break;
       case "SUPPLYCHAIN":
-        navigate("/add-inventory");
+        navigate("/supply-chain-home");
         break;
       case "ENGINEER":
         navigate("/engineer-home");
@@ -99,6 +99,7 @@ function App() {
                 <Route path="/admin-home" element={<AdminHomePage />} />
                 <Route path="/engineer-home" element={<EngineerHomePage />} />
                 <Route path="/rma-home" element={<RMAHomePage />} />
+                <Route path="/supply-chain-home" element={<SupplyChainHomePage  />} />
                 
                 {/* //bihan add */}
                 <Route path="AddNewInventory" element={<AddNewInventory />} />

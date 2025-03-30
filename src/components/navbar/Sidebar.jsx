@@ -45,7 +45,7 @@ const roleAccess = {
   ADMIN: ['/admin-home', '/AddUser', '/ManageUser', '/AddVendor', '/AddCustomer'],
   SUPPLYCHAIN: [
     '/add-inventory', '/ListInventoryComponent', '/InventoryManagement',
-    '/EditInventory', '/SuccessfullyAddInventory', '/RequestDetailShow', '/showInventory/:id'
+    '/EditInventory', '/SuccessfullyAddInventory', '/RequestDetailShow', '/showInventory/:id','/AddNewInventory'
   ],
   ENGINEER: ['/engineer-home', '/RequestPage', '/StatusPage']
 };
