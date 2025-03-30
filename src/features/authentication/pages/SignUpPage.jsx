@@ -57,7 +57,7 @@ const SignUpPage = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const apiURL = "http://localhost:8081/api/auth/register";
+    const apiURL = "http://localhost:8080/api/auth/register";
     
     try {
       // Check if backend is running
@@ -67,7 +67,7 @@ const SignUpPage = () => {
       }
 
       // Send signup request
-      const response = await fetch("http://localhost:8081/api/auth/register", {
+      const response = await fetch("http://localhost:8080/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
