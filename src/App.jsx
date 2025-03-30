@@ -101,7 +101,7 @@ function App() {
                 <Route path="/rma-home" element={<RMAHomePage />} />
                 <Route path="/supply-chain-home" element={<SupplyChainHomePage  />} />
                 
-                {/* //bihan add */}
+                
                 <Route path="AddNewInventory" element={<AddNewInventory />} />
                 <Route path="ListInventoryComponent" element={<ListInventoryComponent />} />
                 <Route path="InventoryManagement" element={<InventoryManagement />} />
