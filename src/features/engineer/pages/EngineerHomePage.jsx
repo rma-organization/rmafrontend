@@ -19,24 +19,28 @@ export default function HomePage() {
 
   const [duration, setDuration] = useState("");
 
+  // Fetch data from the API and process it
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:8080/requests");
+        const response = await fetch("http://localhost:8080/api/requests");
         const data = await response.json();
-        
-        const validRequests = data.filter(request => request.createdAt);
-        if (validRequests.length === 0) return;
-        
-        const earliestDate = new Date(Math.min(...validRequests.map(request => new Date(request.createdAt).getTime())));
+
+        if (data.length === 0) return;
+
+        // Find the earliest createdAt date
+        const earliestDate = new Date(Math.min(...data.map((request) => new Date(request.createdAt).getTime())));
         const startDate = new Date(earliestDate);
-        startDate.setHours(0, 0, 0, 0);
-        
+        startDate.setHours(0, 0, 0, 0); // Normalize to start of the day
+
+        // Calculate the end date of the fourth week
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 28);
+        endDate.setDate(endDate.getDate() + 28); // 4 weeks later
 
-        setDuration(`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`);
+        // Set the duration string
+        setDuration('${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}');
 
+        // Group data into 4 weeks
         const weeklyCounts = {
           Approved: [0, 0, 0, 0],
           Declined: [0, 0, 0, 0],
@@ -46,7 +50,7 @@ export default function HomePage() {
 
         data.forEach((request) => {
           const requestDate = new Date(request.createdAt);
-          const weekIndex = Math.floor((requestDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+          const weekIndex = Math.floor((requestDate - startDate) / (7 * 24 * 60 * 60 * 1000)); // Calculate week index (0-3)
           if (weekIndex >= 0 && weekIndex < 4) {
             switch (request.status) {
               case "Approved":
@@ -56,7 +60,6 @@ export default function HomePage() {
                 weeklyCounts.Declined[weekIndex]++;
                 break;
               case "Requested":
-              case "Pending":
                 weeklyCounts.Pending[weekIndex]++;
                 break;
               case "Faulty Returned":
@@ -68,8 +71,7 @@ export default function HomePage() {
           }
         });
 
-        const maxY = Math.max(...Object.values(weeklyCounts).flat()) || 5;
-
+        // Update the chart data
         setChartData({
           labels: ["First Week", "Second Week", "Third Week", "Fourth Week"],
           datasets: [
@@ -85,16 +87,20 @@ export default function HomePage() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+
+    // Set up a weekly interval to auto-update the chart
+    const interval = setInterval(fetchData, 7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
+    return () => clearInterval(interval); // Cleanup interval on unmount
   }, []);
 
   return (
     <Box sx={{ backgroundColor: "#E0E0E0", minHeight: "100vh", py: 3, px: 5 }}>
+      {/* Header */}
       <Typography variant="h5" fontWeight="bold" mb={2}>
         Welcome Suranjan Nayanjith 👋
       </Typography>
 
+      {/* Search Bar */}
       <TextField
         variant="outlined"
         placeholder="Search..."
@@ -109,9 +115,12 @@ export default function HomePage() {
         sx={{ backgroundColor: "white", borderRadius: 2, mb: 2 }}
       />
 
+      {/* Spacer to create gap between Search Bar & Chart */}
       <Box sx={{ mt: 10 }} />
 
+      {/* Chart & Legend Container */}
       <Box display="flex" alignItems="center">
+        {/* Chart Box */}
         <Box flex={3} sx={{ width: '90%', height: '350px' }}>
           <Bar
             data={chartData}
@@ -120,14 +129,17 @@ export default function HomePage() {
               scales: {
                 y: {
                   beginAtZero: true,
-                  max: Math.max(...chartData.datasets.flatMap(d => d.data), 5),
-                  ticks: { stepSize: 1 },
+                  max: 5, // Set a fixed maximum value for the y-axis
+                  ticks: {
+                    stepSize: 1, // Ensure the y-axis increments by 1
+                  },
                 },
               },
             }}
           />
         </Box>
 
+        {/* Legend Box */}
         <Box flex={1} ml={4}>
           <Typography fontWeight="bold">Duration: {duration}</Typography>
           {["green", "red", "orange", "goldenrod"].map((color, i) => (
