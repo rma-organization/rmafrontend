@@ -1,44 +1,38 @@
-import { Routes, Route, useNavigate } from "react-router-dom"; // No need to import BrowserRouter here
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import React from "react";
-import "./App.css";
-
-// Authentication
 import SplashScreen from "./features/authentication/pages/SplashScreen";
 import LoginPage from "./features/authentication/pages/LoginPage";
 import SignUpPage from "./features/authentication/pages/SignUpPage";
+import AdminHomePage from "./features/admin/AdminHomePage";
+
+import RMAHomePage from "./features/rma/pages/RMAHomePage";
+import EngineerHomePage from "./features/engineer/pages/EngineerHomePage";
+import MainLayout from "./MainLayout"; 
+
 import ProtectedRoute from "./features/authentication/pages/ProtectedRoute";
 import ErrorBoundary from "./features/authentication/pages/ErrorBoundary";
 
-// Layout
-import MainLayout from "./MainLayout";
-
-// Admin
-import AdminHomePage from "./features/admin/AdminHomePage";
-import AddUser from "./features/admin/pages/AddUser";
-import ManageUser from "./features/admin/pages/ManageUser";
-import AddVendor from "./features/admin/pages/AddVendor";
-import AddCustomer from "./features/admin/pages/AddCustomer";
-
-// Supply Chain
-import SupplyChainHomePage from "./features/supplychain/pages/SupplyChainHomePage";
 import AddNewInventory from "./features/supplychain/pages/AddNewInventory";
 import ListInventoryComponent from "./features/supplychain/pages/ListInventoryComponent";
+import SupplyChainHomePage from "./features/supplychain/pages/SupplyChainHomePage";
 import InventoryManagement from "./features/supplychain/pages/InventoryManagement";
 import EditInventory from "./features/supplychain/pages/EditInventory";
 import SuccessfullyAddInventory from "./features/supplychain/pages/SuccessfullyAddInventory";
 import RequestDetailShow from "./features/supplychain/pages/RequestDetailShow";
 import InventoryDetailsShow from "./features/supplychain/pages/InventoryDetailsShow";
 
-// Engineer
-import EngineerHomePage from './features/engineer/pages/EngineerHomePage';
-import HomePage from "./features/engineer/pages/HomePage";
+import AddUser from "./features/admin/pages/AddUser";
+import ManageUser from "./features/admin/pages/ManageUser";
+import AddVendor from "./features/admin/pages/AddVendor";
+import AddCustomer from "./features/admin/pages/AddCustomer";
+
+
 import RequestPage from "./features/engineer/pages/RequestPage";
 import StatusPage from "./features/engineer/pages/StatusPage";
 
-// RMA
-import RMAHomePage from "./features/rma/pages/RMAHomePage";
 import PartRequestManagementRMA from "./features/rma/pages/PartRequestManagementRMA";
+
+import "./App.css";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -76,7 +70,7 @@ function App() {
         navigate("/engineer-home");
         break;
       default:
-        navigate("/"); 
+        navigate("/");
     }
   };
 
@@ -95,44 +89,39 @@ function App() {
       ) : (
         <ErrorBoundary>
           <Routes>
-            {/* Authentication Routes */}
             <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/signup" element={<SignUpPage />} />
 
-            {/* Protected Routes */}
+            {/* Protected Routes with MainLayout */}
             <Route element={<ProtectedRoute user={user} />}>
-              <Route path="/admin-home" element={<AdminHomePage />} />
-              <Route path="/engineer-home" element={<EngineerHomePage />} />
-              <Route path="/rma-home" element={<RMAHomePage />} />
-              <Route path="/add-inventory" element={<AddNewInventory />} />
-            </Route>
-
-            {/* Main Application Layout */}
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<HomePage />} />
-
-              {/* Inventory Management Routes */}
-              <Route path="AddNewInventory" element={<AddNewInventory />} />
-              <Route path="ListInventoryComponent" element={<ListInventoryComponent />} />
-              <Route path="InventoryManagement" element={<InventoryManagement />} />
-              <Route path="SupplyChainHomePage" element={<SupplyChainHomePage />} />
-              <Route path="EditInventory" element={<EditInventory />} />
-              <Route path="SuccessfullyAddInventory" element={<SuccessfullyAddInventory />} />
-              <Route path="RequestDetailShow" element={<RequestDetailShow />} />
-              <Route path="showInventory/:id" element={<InventoryDetailsShow />} />
-              <Route path="edit/:id" element={<EditInventory />} />
-              <Route path="show/:id" element={<RequestDetailShow />} />
-
-              {/* Request and Status Pages */}
-              <Route path="RequestPage" element={<RequestPage />} />
-              <Route path="StatusPage" element={<StatusPage />} />
-              <Route path="ManageUser" element={<ManageUser />} />
-              <Route path="AddUser" element={<AddUser />} />
-              <Route path="PartRequestManagementRMA" element={<PartRequestManagementRMA />} />
-              <Route path="RMAHomePage" element={<RMAHomePage />} />
-              <Route path="AddVendor" element={<AddVendor />} />
-              <Route path="AddCustomer" element={<AddCustomer />} />
+              <Route element={<MainLayout />}>
+                <Route path="/admin-home" element={<AdminHomePage />} />
+                <Route path="/engineer-home" element={<EngineerHomePage />} />
+                <Route path="/rma-home" element={<RMAHomePage />} />
+                
+                {/* //bihan add */}
+                <Route path="AddNewInventory" element={<AddNewInventory />} />
+                <Route path="ListInventoryComponent" element={<ListInventoryComponent />} />
+                <Route path="InventoryManagement" element={<InventoryManagement />} />
+                <Route path="SupplyChainHomePage" element={<SupplyChainHomePage />} />
+                <Route path="EditInventory" element={<EditInventory />} />
+                <Route path="SuccessfullyAddInventory" element={<SuccessfullyAddInventory />} />
+                <Route path="RequestDetailShow" element={<RequestDetailShow />} />
+                <Route path="showInventory/:id" element={<InventoryDetailsShow />} />
+                <Route path="edit/:id" element={<EditInventory />} />
+                <Route path="show/:id" element={<RequestDetailShow />} />
+      
+                {/* Request and Status Pages */}
+                <Route path="RequestPage" element={<RequestPage />} />
+                <Route path="StatusPage" element={<StatusPage />} />
+                <Route path="ManageUser" element={<ManageUser />} />
+                <Route path="AddUser" element={<AddUser />} />
+                <Route path="PartRequestManagementRMA" element={<PartRequestManagementRMA/>} />
+                <Route path="RMAHomePage" element={<RMAHomePage/>} />
+                <Route path="AddVendor" element={<AddVendor />} />
+                <Route path="AddCustomer" element={<AddCustomer />} />
+              </Route>
             </Route>
           </Routes>
         </ErrorBoundary>

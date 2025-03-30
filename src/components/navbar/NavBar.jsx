@@ -16,7 +16,7 @@ import {
   Mail as MailIcon,
   AccountCircle,
 } from "@mui/icons-material";
-import SideBar from "./Sidebar.jsx"; 
+ 
 
 export default function NavBar() {
   const [notifications, setNotifications] = useState([]);
@@ -63,21 +63,8 @@ export default function NavBar() {
     <>
       <CssBaseline />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        {/* Sidebar (Fixed on the Left) */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: 320,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: 320,
-              boxSizing: "border-box",
-            },
-          }}
-        >
-          <SideBar />
-        </Drawer>
-
+        
+        
         {/* Main Content Area */}
         <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
           {/* Fixed Navbar */}
