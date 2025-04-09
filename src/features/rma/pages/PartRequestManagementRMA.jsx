@@ -116,7 +116,7 @@ const PartRequestManagementRMA = () => {
         message={successMessage}
       />
       <Box p={2} mt={10}>
-        <Button variant="contained" component={Link} to="/RMAHomePage">
+        <Button variant="contained" component={Link} to="/rma-home">
           Home
         </Button>
 
