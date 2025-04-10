@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -6,31 +7,34 @@ import {
   Box,
   IconButton,
   Badge,
-  InputBase,
   CssBaseline,
-  Drawer,
+  Button,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
   Notifications as NotificationsIcon,
   Mail as MailIcon,
   AccountCircle,
 } from "@mui/icons-material";
-import SideBar from "./Sidebar.jsx"; 
 
 export default function NavBar() {
   const [notifications, setNotifications] = useState([]);
   const [messageCount, setMessageCount] = useState(2);
   const [role, setRole] = useState("USER");
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const fetchNotifications = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8080/api/notifications?role=${role}&page=dashboard`,
+          `http://localhost:8081/api/notifications?role=${role}&page=dashboard`,
           {
             method: "GET",
             headers: {
@@ -41,7 +45,9 @@ export default function NavBar() {
         );
 
         if (!response.ok) {
-          if (response.status === 403) {
+          if (response.status === 401) {
+            handleLogout();
+          } else if (response.status === 403) {
             throw new Error("Access denied: You do not have permission.");
           } else {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -59,28 +65,17 @@ export default function NavBar() {
     fetchNotifications();
   }, [role]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    navigate("/login");
+  };
+
   return (
     <>
       <CssBaseline />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        {/* Sidebar (Fixed on the Left) */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: 320,
-            flexShrink: 0,
-            "& .MuiDrawer-paper": {
-              width: 320,
-              boxSizing: "border-box",
-            },
-          }}
-        >
-          <SideBar />
-        </Drawer>
-
-        {/* Main Content Area */}
         <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-          {/* Fixed Navbar */}
           <AppBar
             position="fixed"
             sx={{
@@ -88,25 +83,11 @@ export default function NavBar() {
               backgroundColor: "#fff",
               color: "#000",
               boxShadow: 1,
-              width: `calc(100% - 320px)`, // Corrected width calculation
-              left: "320px", // Push to the right of sidebar
+              width: `calc(100% - 320px)`,
+              left: "320px",
             }}
           >
-            <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-              {/* Search Box */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  backgroundColor: "#f2f2f2",
-                  px: 1,
-                  borderRadius: 2,
-                  width: { xs: "60%", sm: "40%", md: "35%" },
-                }}
-              >
-              </Box>
-
-              {/* Right-side Icons */}
+            <Toolbar sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <IconButton>
                   <Badge badgeContent={notifications.length} color="error">
@@ -120,23 +101,30 @@ export default function NavBar() {
                 </IconButton>
                 <Typography fontWeight="bold">Suranjan Nayanjith</Typography>
                 <AccountCircle />
+
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleLogout}
+                  sx={{ ml: 2 }}
+                >
+                  Logout
+                </Button>
               </Box>
             </Toolbar>
           </AppBar>
 
-          {/* Main Content */}
           <Box
             component="main"
             sx={{
               flexGrow: 1,
-              paddingTop: "80px", // Adjust based on navbar height
+              paddingTop: "80px",
               paddingX: 2,
               overflowY: "auto",
               backgroundColor: "#f5f5f5",
               minHeight: "100vh",
             }}
-          >
-          </Box>
+          ></Box>
         </Box>
       </Box>
     </>
