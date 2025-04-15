@@ -6,23 +6,21 @@ import {
   Box,
   IconButton,
   Badge,
-  InputBase,
   CssBaseline,
-  Drawer,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
   Notifications as NotificationsIcon,
   Mail as MailIcon,
   AccountCircle,
 } from "@mui/icons-material";
- 
+import ChatDrawer from "./ChatDrawer"; // 👈 Make sure this path is correct
 
 export default function NavBar() {
   const [notifications, setNotifications] = useState([]);
   const [messageCount, setMessageCount] = useState(2);
   const [role, setRole] = useState("USER");
   const [error, setError] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false); // 👈 New state
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -63,11 +61,8 @@ export default function NavBar() {
     <>
       <CssBaseline />
       <Box sx={{ display: "flex", height: "100vh" }}>
-        
-        
-        {/* Main Content Area */}
         <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-          {/* Fixed Navbar */}
+          {/* Navbar */}
           <AppBar
             position="fixed"
             sx={{
@@ -75,57 +70,51 @@ export default function NavBar() {
               backgroundColor: "#fff",
               color: "#000",
               boxShadow: 1,
-              width: `calc(100% - 320px)`, // Corrected width calculation
-              left: "320px", // Push to the right of sidebar
+              width: `calc(100% - 320px)`,
+              left: "320px",
             }}
           >
             <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-              {/* Search Box */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  backgroundColor: "#f2f2f2",
-                  px: 1,
-                  borderRadius: 2,
-                  width: { xs: "60%", sm: "40%", md: "35%" },
-                }}
-              >
-              </Box>
+              <Box sx={{ width: { xs: "60%", sm: "40%", md: "35%" } }}></Box>
 
-              {/* Right-side Icons */}
+              {/* Right Icons */}
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <IconButton>
                   <Badge badgeContent={notifications.length} color="error">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
-                <IconButton>
+
+                {/* Inbox Icon triggers drawer */}
+                <IconButton onClick={() => setChatOpen(true)}>
                   <Badge badgeContent={messageCount} color="error">
                     <MailIcon />
                   </Badge>
                 </IconButton>
+
                 <Typography fontWeight="bold">Suranjan Nayanjith</Typography>
                 <AccountCircle />
               </Box>
             </Toolbar>
           </AppBar>
 
-          {/* Main Content */}
+          {/* Main content */}
           <Box
             component="main"
             sx={{
               flexGrow: 1,
-              paddingTop: "80px", // Adjust based on navbar height
+              paddingTop: "80px",
               paddingX: 2,
               overflowY: "auto",
               backgroundColor: "#f5f5f5",
               minHeight: "100vh",
             }}
-          >
-          </Box>
+          ></Box>
         </Box>
       </Box>
+
+      {/* Chat Drawer Component */}
+      <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} />
     </>
   );
 }
