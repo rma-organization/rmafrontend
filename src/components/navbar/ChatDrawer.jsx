@@ -1,87 +1,154 @@
-import React, { useState, useEffect } from "react";
-import {
-  Drawer,
-  Box,
-  Typography,
-  IconButton,
-  TextField,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import { connect, sendMessage, disconnect } from "./ChatSocket";
+
+// import React, { useEffect, useState } from "react";
+// import { connect, sendMessage, disconnect } from "./ChatSocket";
+// import { Drawer, Input, Button, List } from "antd";
+// import { SendOutlined } from "@ant-design/icons";
+
+// const ChatDrawer = ({ open, onClose }) => {
+//   const [messages, setMessages] = useState([]);
+//   const [to, setTo] = useState("");
+//   const [message, setMessage] = useState("");
+
+//   useEffect(() => {
+//     connect((msg) => {
+//       setMessages((prev) => [...prev, { ...msg, self: false }]);
+//     });
+
+//     return () => {
+//       disconnect();
+//     };
+//   }, []);
+
+//   const handleSend = () => {
+//     if (to.trim() && message.trim()) {
+//       const email = localStorage.getItem("email");
+//       const newMsg = {
+//         sender: email,
+//         receiver: to,
+//         content: message,
+//         type: "CHAT",
+//         self: true,
+//       };
+
+//       sendMessage(newMsg);
+//       setMessages((prev) => [...prev, newMsg]);
+//       setMessage("");
+//     }
+//   };
+
+//   return (
+//     <Drawer
+//       title="Messages"
+//       placement="right"
+//       width={360}
+//       onClose={onClose}
+//       open={open}
+//     >
+//       <Input
+//         placeholder="To"
+//         value={to}
+//         onChange={(e) => setTo(e.target.value)}
+//         style={{ marginBottom: 8 }}
+//       />
+//       <List
+//         size="small"
+//         bordered
+//         dataSource={messages}
+//         renderItem={(msg) => (
+//           <List.Item style={{ textAlign: msg.self ? "right" : "left" }}>
+//             <strong>{msg.self ? "Me" : msg.sender}:</strong> {msg.content}
+//           </List.Item>
+//         )}
+//         style={{ height: 300, overflowY: "scroll", marginBottom: 8 }}
+//       />
+//       <Input
+//         placeholder="Type a message"
+//         value={message}
+//         onChange={(e) => setMessage(e.target.value)}
+//         onPressEnter={handleSend}
+//         addonAfter={
+//           <SendOutlined onClick={handleSend} style={{ cursor: "pointer" }} />
+//         }
+//       />
+//     </Drawer>
+//   );
+// };
+
+// export default ChatDrawer;
+
+import React, { useEffect, useState } from "react";
+import { connect, sendMessage, disconnect } from "./stompClient"; // Import stompClient functions
+import { Drawer, Input, Button, List } from "antd";
+import { SendOutlined } from "@ant-design/icons";
 
 const ChatDrawer = ({ open, onClose }) => {
+  const [messages, setMessages] = useState([]);
   const [to, setTo] = useState("");
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
 
+  // Set up WebSocket connection on component mount
   useEffect(() => {
-    if (open) {
-      connect(handleIncomingMessage);
-    }
-    return () => disconnect();
-  }, [open]);
+    connect((msg) => {
+      setMessages((prev) => [...prev, { ...msg, self: false }]); // Update messages with received data
+    });
 
-  const handleIncomingMessage = (data) => {
-    setMessages((prev) => [...prev, { ...data, self: false }]);
-  };
+    return () => {
+      disconnect(); // Clean up and disconnect when component unmounts
+    };
+  }, []);
 
+  // Handle sending a message
   const handleSend = () => {
     if (to.trim() && message.trim()) {
-      const newMsg = { to, content: message };
-      sendMessage(newMsg);
-      setMessages((prev) => [...prev, { ...newMsg, self: true }]);
-      setMessage("");
+      const email = localStorage.getItem("email"); // Get email from localStorage
+      const newMsg = {
+        sender: email,
+        receiver: to,
+        content: message,
+        type: "CHAT",
+        self: true, // Mark this as a self-sent message
+      };
+
+      sendMessage(newMsg); // Send the message to the server
+      setMessages((prev) => [...prev, newMsg]); // Add the message to local state
+      setMessage(""); // Clear the input field
     }
   };
 
   return (
-    <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box sx={{ width: 350, padding: 2, height: "100%", display: "flex", flexDirection: "column" }}>
-        {/* Header */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6">Chat</Typography>
-          <IconButton onClick={onClose}><CloseIcon /></IconButton>
-        </Box>
-
-        {/* Message List */}
-        <List sx={{ flexGrow: 1, overflowY: "auto", my: 2 }}>
-          {messages.map((msg, index) => (
-            <ListItem key={index} sx={{ textAlign: msg.self ? "right" : "left" }}>
-              <ListItemText
-                primary={msg.content}
-                secondary={msg.self ? "You" : msg.to}
-                primaryTypographyProps={{ fontSize: 14 }}
-              />
-            </ListItem>
-          ))}
-        </List>
-
-        {/* Form */}
-        <TextField
-          label="To (email)"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          fullWidth
-          size="small"
-          sx={{ mb: 1 }}
-        />
-        <TextField
-          label="Message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          fullWidth
-          multiline
-          minRows={2}
-          sx={{ mb: 1 }}
-        />
-        <Button variant="contained" fullWidth onClick={handleSend}>
-          Send
-        </Button>
-      </Box>
+    <Drawer
+      title="Messages"
+      placement="right"
+      width={360}
+      onClose={onClose}
+      open={open}
+    >
+      <Input
+        placeholder="To"
+        value={to}
+        onChange={(e) => setTo(e.target.value)} // Handle recipient input
+        style={{ marginBottom: 8 }}
+      />
+      <List
+        size="small"
+        bordered
+        dataSource={messages}
+        renderItem={(msg) => (
+          <List.Item style={{ textAlign: msg.self ? "right" : "left" }}>
+            <strong>{msg.self ? "Me" : msg.sender}:</strong> {msg.content}
+          </List.Item>
+        )}
+        style={{ height: 300, overflowY: "scroll", marginBottom: 8 }}
+      />
+      <Input
+        placeholder="Type a message"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)} // Handle message input
+        onPressEnter={handleSend} // Send message when Enter is pressed
+        addonAfter={
+          <SendOutlined onClick={handleSend} style={{ cursor: "pointer" }} />
+        }
+      />
     </Drawer>
   );
 };

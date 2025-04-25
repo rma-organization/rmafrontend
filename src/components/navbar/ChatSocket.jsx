@@ -1,54 +1,94 @@
-// chatSocket.jsx
+// import { Client } from "@stomp/stompjs";
 
-let socket = null;
-let messageCallback = null;
+// let stompClient = null;
 
-/**
- * Connects to the WebSocket server and sets up event handlers.
- * @param {Function} onMessageReceived - Callback for when a message is received.
- * @param {Function} [onOpenCallback=null] - Optional callback when socket opens.
- */
-export const connect = (onMessageReceived, onOpenCallback = null) => {
-  socket = new WebSocket("ws://localhost:8080/chat"); // Adjust your endpoint if needed
+// export const connect = (onMessageReceived) => {
+//   stompClient = new Client({
+//     brokerURL: "ws://localhost:8080/ws",
+//     reconnectDelay: 5000,
+//     onConnect: () => {
+//       console.log("✅ Connected to WebSocket");
+//       const email = localStorage.getItem("email");
 
-  socket.onopen = () => {
-    console.log("✅ WebSocket connected");
-    if (onOpenCallback) onOpenCallback();
-  };
+//       stompClient.subscribe("/user/queue/messages", (message) => {
+//         const data = JSON.parse(message.body);
+//         onMessageReceived(data);
+//       });
 
-  socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (messageCallback) messageCallback(data);
-  };
+//       stompClient.publish({
+//         destination: "/app/chat.addUser",
+//         body: JSON.stringify({ sender: email })
+//       });
+//     },
+//     onStompError: (frame) => {
+//       console.error("❌ STOMP error:", frame);
+//     }
+//   });
 
-  socket.onerror = (err) => {
-    console.error("❌ WebSocket error:", err);
-  };
+//   stompClient.activate();
+// };
 
-  socket.onclose = () => {
-    console.log("🔌 WebSocket disconnected");
-  };
+// export const sendMessage = (message) => {
+//   if (stompClient && stompClient.connected) {
+//     stompClient.publish({
+//       destination: "/app/chat.sendMessage",
+//       body: JSON.stringify(message)
+//     });
+//   } else {
+//     console.error("❌ Cannot send message. STOMP client not connected.");
+//   }
+// };
 
-  messageCallback = onMessageReceived;
+// export const disconnect = () => {
+//   if (stompClient) stompClient.deactivate();
+// };
+
+
+import { Client } from "@stomp/stompjs";
+
+let stompClient = null;
+
+export const connect = (onMessageReceived) => {
+  const email = localStorage.getItem("email");
+
+  stompClient = new Client({
+    brokerURL: "ws://localhost:8080/ws",
+    connectHeaders: {
+      email: email, // ✅ Pass email in CONNECT headers
+    },
+    reconnectDelay: 5000,
+    onConnect: () => {
+      console.log("✅ Connected to WebSocket");
+
+      stompClient.subscribe("/user/queue/messages", (message) => {
+        const data = JSON.parse(message.body);
+        onMessageReceived(data);
+      });
+
+      stompClient.publish({
+        destination: "/app/chat.addUser",
+        body: JSON.stringify({ sender: email }),
+      });
+    },
+    onStompError: (frame) => {
+      console.error("❌ STOMP error:", frame);
+    },
+  });
+
+  stompClient.activate();
 };
 
-/**
- * Sends a message through the WebSocket connection.
- * @param {Object} msgObj - Message object to send.
- */
-export const sendMessage = (msgObj) => {
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify(msgObj));
+export const sendMessage = (message) => {
+  if (stompClient && stompClient.connected) {
+    stompClient.publish({
+      destination: "/app/chat.sendMessage",
+      body: JSON.stringify(message),
+    });
   } else {
-    console.warn("⚠️ WebSocket not open. Cannot send message.");
+    console.error("❌ Cannot send message. STOMP client not connected.");
   }
 };
 
-/**
- * Disconnects the WebSocket connection.
- */
 export const disconnect = () => {
-  if (socket) {
-    socket.close();
-  }
+  if (stompClient) stompClient.deactivate();
 };
