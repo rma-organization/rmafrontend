@@ -33,8 +33,8 @@ const EditInventory = () => {
       .catch((err) => console.error("Error fetching vendors:", err));
   }, [id, apiUrl]);
 
-  const handleStatusChange = (e) => {
-    setFormData((prevData) => ({ ...prevData, status: e.target.value }));
+  const handleInputChange = (field, value) => {
+    setFormData((prevData) => ({ ...prevData, [field]: value }));
   };
 
   const handleUpdate = async (event) => {
@@ -44,14 +44,14 @@ const EditInventory = () => {
     try {
       await axios.put(
         `${apiUrl}/api/inventory/${id}`,
-        formData, // Send full object to prevent missing fields
+        formData,
         { headers: { "Content-Type": "application/json" } }
       );
-      alert("Status updated successfully!");
+      alert("Inventory updated successfully!");
       navigate("/InventoryManagement");
     } catch (error) {
-      console.error("Error updating status:", error);
-      setError(error.response?.data?.message || "Failed to update status.");
+      console.error("Error updating inventory:", error);
+      setError(error.response?.data?.message || "Failed to update inventory.");
     }
   };
 
@@ -72,22 +72,39 @@ const EditInventory = () => {
               <Box flex={1}>
                 {["name", "boxPartNumber", "inBoxPartNumber", "boxSerialNumber", "inBoxSerialNumber", "quantity", "inventoryLocation"].map((field, index) => (
                   <Box key={index} display="flex" alignItems="center" mb={2}>
-                    <Typography sx={{ width: "35%", minWidth: "120px" }}>{field.replace(/([A-Z])/g, " $1")}</Typography>
-                    <TextField fullWidth value={formData[field] || ""} disabled />
+                    <Typography sx={{ width: "35%", minWidth: "120px" }}>
+                      {field.replace(/([A-Z])/g, " $1")}
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      value={formData[field] || ""}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                    />
                   </Box>
                 ))}
               </Box>
               <Box flex={1}>
                 {["mitNumber", "itemType", "poNumber", "lotNumber", "description"].map((field, index) => (
                   <Box key={index} display="flex" alignItems="center" mb={2}>
-                    <Typography sx={{ width: "35%", minWidth: "120px" }}>{field.replace(/([A-Z])/g, " $1")}</Typography>
-                    <TextField fullWidth value={formData[field] || ""} disabled multiline={field === "description"} rows={field === "description" ? 3 : 1} />
+                    <Typography sx={{ width: "35%", minWidth: "120px" }}>
+                      {field.replace(/([A-Z])/g, " $1")}
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      value={formData[field] || ""}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      multiline={field === "description"}
+                      rows={field === "description" ? 3 : 1}
+                    />
                   </Box>
                 ))}
                 <Box display="flex" alignItems="center" mb={2}>
                   <Typography sx={{ width: "35%", minWidth: "120px" }}>Status</Typography>
                   <FormControl fullWidth>
-                    <Select value={formData.status || ""} onChange={handleStatusChange}>
+                    <Select
+                      value={formData.status || ""}
+                      onChange={(e) => handleInputChange("status", e.target.value)}
+                    >
                       <MenuItem value="" disabled>Select Status</MenuItem>
                       <MenuItem value="Available">Available</MenuItem>
                       <MenuItem value="Not Available">Not Available</MenuItem>
@@ -97,7 +114,10 @@ const EditInventory = () => {
                 <Box display="flex" alignItems="center" mb={2}>
                   <Typography sx={{ width: "35%", minWidth: "120px" }}>Vendor</Typography>
                   <FormControl fullWidth>
-                    <Select value={formData.vendorId || ""} disabled>
+                    <Select
+                      value={formData.vendorId || ""}
+                      onChange={(e) => handleInputChange("vendorId", e.target.value)}
+                    >
                       <MenuItem value="" disabled>Select Vendor</MenuItem>
                       {vendors.map((vendor) => (
                         <MenuItem key={vendor.id} value={vendor.id}>{vendor.name}</MenuItem>
@@ -110,7 +130,7 @@ const EditInventory = () => {
             {error && <Typography color="error" mt={2}>{error}</Typography>}
             <Box mt={3}>
               <Button fullWidth type="submit" variant="contained" sx={{ backgroundColor: "blue", color: "white" }}>
-                Update Status
+                Update Inventory
               </Button>
             </Box>
           </form>
@@ -121,5 +141,3 @@ const EditInventory = () => {
 };
 
 export default EditInventory;
-
-
