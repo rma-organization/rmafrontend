@@ -5,12 +5,13 @@ let stompClient = null;
 
 // Connect to the WebSocket and subscribe to the user's message queue
 export const connect = (onMessageReceived) => {
-  const email = localStorage.getItem("email"); // Retrieve user email from localStorage
+  const username = localStorage.getItem("username"); // Retrieve user email from localStorage
+  console.log("📧 Username from localStorage:", username);
 
   stompClient = new Client({
     brokerURL: "ws://localhost:8080/ws", // Your WebSocket endpoint
     connectHeaders: {
-      email: email, // Pass email in headers for connection
+      username: username, // Pass email in headers for connection
     },
     reconnectDelay: 5000, // Reconnect delay in case of disconnection
 
@@ -26,7 +27,7 @@ export const connect = (onMessageReceived) => {
       // Inform the server that the user has connected
       stompClient.publish({
         destination: "/app/chat.addUser",
-        body: JSON.stringify({ sender: email }),
+        body: JSON.stringify({ sender: username }),
       });
     },
     onStompError: (frame) => {
