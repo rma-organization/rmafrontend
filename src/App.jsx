@@ -30,6 +30,8 @@ import RequestPage from "./features/engineer/pages/RequestPage";
 import StatusPage from "./features/engineer/pages/StatusPage";
 import PartRequestManagementRMA from "./features/rma/pages/PartRequestManagementRMA";
 
+import NotificationsPage from "./components/navbar/NotificationsPage";
+
 import "./App.css";
 
 function App() {
@@ -118,6 +120,7 @@ function App() {
                 <Route path="PartRequestManagementRMA" element={<PartRequestManagementRMA />} />
                 <Route path="AddVendor" element={<AddVendor />} />
                 <Route path="AddCustomer" element={<AddCustomer />} />
+                 <Route path="/notifications" element={<NotificationsPage />} />
               </Route>
             </Route>
           </Routes>
