@@ -161,7 +161,7 @@ const InventoryManagement = () => {
 
   return (
     <Box p={2} mt={10}>
-      <Button variant="contained" disableElevation component={Link} to="/SupplyChainHomePage">
+      <Button variant="contained" disableElevation component={Link} to="/supply-chain-home">
         Home
       </Button>
 

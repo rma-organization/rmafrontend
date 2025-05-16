@@ -115,7 +115,7 @@ const ListRequestsComponent = () => {
         message={successMessage}
       />
       <Box p={2} mt={10}>
-        <Button variant="contained" component={Link} to="/SupplyChainHomePage">
+        <Button variant="contained" component={Link} to="/supply-chain-home">
           Home
         </Button>
 
