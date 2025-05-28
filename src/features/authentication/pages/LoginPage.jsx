@@ -110,3 +110,131 @@ const LoginPage = ({ onLogin }) => {
 };
 
 export default LoginPage;
+
+// // src/pages/LoginPage.jsx
+// import React, { useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import "../styles/LoginPage.css";
+
+// import logoPath from "../../../assets/logo.png";
+// import backgroundPath from "../../../assets/background.png";
+
+// const LoginPage = ({ onLogin }) => {
+//   const [formData, setFormData] = useState({
+//     username: "",
+//     password: "",
+//     role: "",
+//   });
+
+//   const [error, setError] = useState("");
+//   const navigate = useNavigate();
+
+//   const handleChange = (e) => {
+//     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setError("");
+
+//     const { username, password, role } = formData;
+
+//     try {
+//       const res = await fetch("http://localhost:8080/api/auth/login", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ username, password, role }),
+//       });
+
+//       if (!res.ok) {
+//         const errorMsg = await res.text();
+//         throw new Error(errorMsg || "Login failed.");
+//       }
+
+//       const data = await res.json();
+//       const { token } = data;
+
+//       // Save to localStorage for later WebSocket + API use
+//       localStorage.setItem("access_token", token);
+//       localStorage.setItem("role", role);
+//       localStorage.setItem("username", username);
+
+//       // Optional callback
+//       onLogin?.(data);
+
+//       // Redirect to notifications
+//       navigate("/notifications");
+//     } catch (err) {
+//       console.error("Login error:", err);
+//       setError(err.message || "An unexpected error occurred.");
+//     }
+//   };
+
+//   return (
+//     <div
+//       className="login-container"
+//       style={{
+//         backgroundImage: `url(${backgroundPath})`,
+//         backgroundSize: "cover",
+//         height: "100vh",
+//       }}
+//     >
+//       <img src={logoPath} alt="Millennium IT" className="logo" />
+//       <h2 className="login-heading">RMA Web Application</h2>
+//       <div className="login-box">
+//         <h3 className="login-title">LOG IN</h3>
+//         {error && <p className="error-message">{error}</p>}
+//         <form onSubmit={handleSubmit}>
+//           <input
+//             type="text"
+//             name="username"
+//             placeholder="Username"
+//             value={formData.username}
+//             onChange={handleChange}
+//             className="input-field"
+//             required
+//           />
+
+//           <select
+//             name="role"
+//             value={formData.role}
+//             onChange={handleChange}
+//             className="input-field"
+//             required
+//           >
+//             <option value="">Select Role</option>
+//             <option value="RMA">RMA</option>
+//             <option value="ADMIN">ADMIN</option>
+//             <option value="SUPPLYCHAIN">SUPPLYCHAIN</option>
+//             <option value="ENGINEER">ENGINEER</option>
+//           </select>
+
+//           <input
+//             type="password"
+//             name="password"
+//             placeholder="Password"
+//             value={formData.password}
+//             onChange={handleChange}
+//             className="input-field"
+//             required
+//           />
+
+//           <div className="forgot-password">
+//             <a href="/forgot-password">Forgot Password?</a>
+//           </div>
+//           <button type="submit" className="login-button">
+//             LOG IN
+//           </button>
+//         </form>
+//         <p className="signup-text">
+//           Don’t have an account?{" "}
+//           <span className="signup-link" onClick={() => navigate("/signup")}>
+//             Sign Up
+//           </span>
+//         </p>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default LoginPage;
