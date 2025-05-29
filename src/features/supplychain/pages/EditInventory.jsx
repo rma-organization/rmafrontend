@@ -17,20 +17,28 @@ const EditInventory = () => {
   const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
-  const [formData, setFormData] = useState(null);
+  const [formData, setFormData] = useState({});
   const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get(`${apiUrl}/api/inventory/${id}`)
-      .then((res) => {
-        setFormData(res.data);
-      })
-      .catch((err) => console.error("Error fetching inventory:", err));
+    const fetchData = async () => {
+      try {
+        const inventoryRes = await axios.get(`${apiUrl}/api/inventory/${id}`);
+        setFormData(inventoryRes.data);
 
-    axios.get(`${apiUrl}/api/vendors`)
-      .then((res) => setVendors(Array.isArray(res.data) ? res.data : []))
-      .catch((err) => console.error("Error fetching vendors:", err));
+        const vendorsRes = await axios.get(`${apiUrl}/api/vendors`);
+        setVendors(Array.isArray(vendorsRes.data) ? vendorsRes.data : []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [id, apiUrl]);
 
   const handleInputChange = (field, value) => {
@@ -40,22 +48,26 @@ const EditInventory = () => {
   const handleUpdate = async (event) => {
     event.preventDefault();
     setError(null);
+    setSubmitting(true);
 
     try {
-      await axios.put(
-        `${apiUrl}/api/inventory/${id}`,
-        formData,
-        { headers: { "Content-Type": "application/json" } }
-      );
+      await axios.put(`${apiUrl}/api/inventory/${id}`, formData, {
+        headers: { "Content-Type": "application/json" },
+      });
       alert("Inventory updated successfully!");
       navigate("/InventoryManagement");
     } catch (error) {
       console.error("Error updating inventory:", error);
       setError(error.response?.data?.message || "Failed to update inventory.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (!formData) return <Typography>Loading...</Typography>;
+  const formatLabel = (label) =>
+    label.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
+
+  if (loading) return <Typography>Loading...</Typography>;
 
   return (
     <Box p={2} mt={8}>
@@ -70,34 +82,49 @@ const EditInventory = () => {
           <form onSubmit={handleUpdate}>
             <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
               <Box flex={1}>
-                {["name", "boxPartNumber", "inBoxPartNumber", "boxSerialNumber", "inBoxSerialNumber", "quantity", "inventoryLocation"].map((field, index) => (
+                {[
+                  "name",
+                  "boxPartNumber",
+                  "inBoxPartNumber",
+                  "boxSerialNumber",
+                  "inBoxSerialNumber",
+                  "quantity",
+                  "inventoryLocation",
+                  "airwaybillnumber",
+                  "amount",
+                ].map((field, index) => (
                   <Box key={index} display="flex" alignItems="center" mb={2}>
                     <Typography sx={{ width: "35%", minWidth: "120px" }}>
-                      {field.replace(/([A-Z])/g, " $1")}
+                      {formatLabel(field)}
                     </Typography>
                     <TextField
                       fullWidth
-                      value={formData[field] || ""}
+                      type={["quantity", "amount"].includes(field) ? "number" : "text"}
+                      value={formData[field] ?? ""}
                       onChange={(e) => handleInputChange(field, e.target.value)}
                     />
                   </Box>
                 ))}
               </Box>
               <Box flex={1}>
-                {["mitNumber", "itemType", "poNumber", "lotNumber", "description"].map((field, index) => (
-                  <Box key={index} display="flex" alignItems="center" mb={2}>
-                    <Typography sx={{ width: "35%", minWidth: "120px" }}>
-                      {field.replace(/([A-Z])/g, " $1")}
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      value={formData[field] || ""}
-                      onChange={(e) => handleInputChange(field, e.target.value)}
-                      multiline={field === "description"}
-                      rows={field === "description" ? 3 : 1}
-                    />
-                  </Box>
-                ))}
+                {["currency", "mitNumber", "itemType", "poNumber", "lotNumber", "description"].map(
+                  (field, index) => (
+                    <Box key={index} display="flex" alignItems="center" mb={2}>
+                      <Typography sx={{ width: "35%", minWidth: "120px" }}>
+                        {formatLabel(field)}
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        value={formData[field] ?? ""}
+                        onChange={(e) => handleInputChange(field, e.target.value)}
+                        multiline={field === "description"}
+                        rows={field === "description" ? 3 : 1}
+                      />
+                    </Box>
+                  )
+                )}
+
+                {/* Status Select */}
                 <Box display="flex" alignItems="center" mb={2}>
                   <Typography sx={{ width: "35%", minWidth: "120px" }}>Status</Typography>
                   <FormControl fullWidth>
@@ -105,12 +132,16 @@ const EditInventory = () => {
                       value={formData.status || ""}
                       onChange={(e) => handleInputChange("status", e.target.value)}
                     >
-                      <MenuItem value="" disabled>Select Status</MenuItem>
+                      <MenuItem value="" disabled>
+                        Select Status
+                      </MenuItem>
                       <MenuItem value="Available">Available</MenuItem>
                       <MenuItem value="Not Available">Not Available</MenuItem>
                     </Select>
                   </FormControl>
                 </Box>
+
+                {/* Vendor Select */}
                 <Box display="flex" alignItems="center" mb={2}>
                   <Typography sx={{ width: "35%", minWidth: "120px" }}>Vendor</Typography>
                   <FormControl fullWidth>
@@ -118,19 +149,33 @@ const EditInventory = () => {
                       value={formData.vendorId || ""}
                       onChange={(e) => handleInputChange("vendorId", e.target.value)}
                     >
-                      <MenuItem value="" disabled>Select Vendor</MenuItem>
+                      <MenuItem value="" disabled>
+                        Select Vendor
+                      </MenuItem>
                       {vendors.map((vendor) => (
-                        <MenuItem key={vendor.id} value={vendor.id}>{vendor.name}</MenuItem>
+                        <MenuItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Box>
               </Box>
             </Box>
-            {error && <Typography color="error" mt={2}>{error}</Typography>}
+            {error && (
+              <Typography color="error" mt={2}>
+                {error}
+              </Typography>
+            )}
             <Box mt={3}>
-              <Button fullWidth type="submit" variant="contained" sx={{ backgroundColor: "blue", color: "white" }}>
-                Update Inventory
+              <Button
+                fullWidth
+                type="submit"
+                variant="contained"
+                sx={{ backgroundColor: "blue", color: "white" }}
+                disabled={submitting}
+              >
+                {submitting ? "Updating..." : "Update Inventory"}
               </Button>
             </Box>
           </form>
