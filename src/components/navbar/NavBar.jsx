@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -17,53 +17,8 @@ import {
 } from "@mui/icons-material";
 
 export default function NavBar() {
-  const [notifications, setNotifications] = useState([]);
-  const [messageCount, setMessageCount] = useState(2);
-  const [role, setRole] = useState("USER");
-  const [error, setError] = useState(null);
+  const messageCount = 2; // Static or mock value
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    const fetchNotifications = async () => {
-      try {
-        const response = await fetch(
-          `http://localhost:8081/api/notifications?role=${role}&page=dashboard`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            handleLogout();
-          } else if (response.status === 403) {
-            throw new Error("Access denied: You do not have permission.");
-          } else {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-        }
-
-        const data = await response.json();
-        setNotifications(data);
-      } catch (err) {
-        console.error("Error fetching notifications:", err);
-        setError(err.message);
-      }
-    };
-
-    fetchNotifications();
-  }, [role]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -89,16 +44,19 @@ export default function NavBar() {
           >
             <Toolbar sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <IconButton>
-                  <Badge badgeContent={notifications.length} color="error">
+                {/* 👉 Navigate to notifications page */}
+                <IconButton onClick={() => navigate("/notifications")}>
+                  <Badge badgeContent={0} color="error">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
+
                 <IconButton>
                   <Badge badgeContent={messageCount} color="error">
                     <MailIcon />
                   </Badge>
                 </IconButton>
+
                 <Typography fontWeight="bold">Suranjan Nayanjith</Typography>
                 <AccountCircle />
 
