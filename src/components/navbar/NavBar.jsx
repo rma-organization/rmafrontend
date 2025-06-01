@@ -20,21 +20,32 @@ export default function NavBar() {
   const [notifications, setNotifications] = useState([]);
   const [messageCount, setMessageCount] = useState(2);
   const [role, setRole] = useState("USER");
+  const [username, setUsername] = useState(""); // new state for username
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const storedUsername = localStorage.getItem("username"); // retrieve username
+    const storedRole = localStorage.getItem("role");
 
     if (!token) {
       navigate("/login");
       return;
     }
 
+    if (storedUsername) {
+      setUsername(storedUsername); // update state
+    }
+
+    if (storedRole) {
+      setRole(storedRole); // optional: in case role is dynamic
+    }
+
     const fetchNotifications = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8081/api/notifications?role=${role}&page=dashboard`,
+          `http://localhost:8080/api/notifications?role=${storedRole || role}&page=dashboard`,
           {
             method: "GET",
             headers: {
@@ -63,11 +74,12 @@ export default function NavBar() {
     };
 
     fetchNotifications();
-  }, [role]);
+  }, [navigate, role]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
+    localStorage.removeItem("username");
     navigate("/login");
   };
 
@@ -99,7 +111,9 @@ export default function NavBar() {
                     <MailIcon />
                   </Badge>
                 </IconButton>
-                <Typography fontWeight="bold">Suranjan Nayanjith</Typography>
+                <Typography fontWeight="bold">
+                  {username || "User"}
+                </Typography>
                 <AccountCircle />
 
                 <Button
