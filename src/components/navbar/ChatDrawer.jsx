@@ -10,7 +10,7 @@ const ChatDrawer = ({ open, onClose }) => {
   const [to, setTo] = useState("");
   const [message, setMessage] = useState("");
   const currentUser = localStorage.getItem("username") || "currentUser";
-  
+
   // User-specific state initialization
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem(`chatUsers_${currentUser}`);
@@ -18,7 +18,7 @@ const ChatDrawer = ({ open, onClose }) => {
   });
   const [activeUser, setActiveUser] = useState(null);
   const [isNewChat, setIsNewChat] = useState(false);
-  
+
   const [chatHistory, setChatHistory] = useState(() => {
     const saved = localStorage.getItem(`chatHistory_${currentUser}`);
     return saved ? JSON.parse(saved) : {};
@@ -34,7 +34,7 @@ const ChatDrawer = ({ open, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Refs
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -69,13 +69,13 @@ const ChatDrawer = ({ open, onClose }) => {
   // Mark messages as read when opening a chat
   const markMessagesAsRead = useCallback((username) => {
     if (!username) return;
-    
+
     setUnreadCounts(prev => {
       const newCounts = { ...prev };
       delete newCounts[username];
       return newCounts;
     });
-    
+
     // Mark as read on server
     axios.post('/api/chat/markAsRead', null, {
       params: {
@@ -94,7 +94,7 @@ const ChatDrawer = ({ open, onClose }) => {
       const response = await axios.get('/api/users', {
         timeout: 5000
       });
-      
+
       // Filter out current user and invalid entries
       const usersList = response.data
         .filter(user => user && user.username && user.username !== currentUser)
@@ -120,7 +120,7 @@ const ChatDrawer = ({ open, onClose }) => {
   // Load chat history with strict filtering
   const loadChatHistory = useCallback(async (otherUser) => {
     if (!otherUser) return;
-    
+
     setIsLoading(true);
     try {
       const response = await axios.get('/api/chat/messages/between', {
@@ -188,16 +188,16 @@ const ChatDrawer = ({ open, onClose }) => {
       console.warn("Invalid message format:", msg);
       return;
     }
-    
+
     // Only process messages where currentUser is involved
     if (msg.receiver !== currentUser && msg.sender !== currentUser) {
       return;
     }
-    
+
     // Determine the other participant in the conversation
     const sender = msg.sender === currentUser ? msg.receiver : msg.sender;
     const isCurrentChat = sender === activeUser;
-    
+
     const newMsg = { 
       ...msg, 
       self: msg.sender === currentUser,
@@ -205,7 +205,7 @@ const ChatDrawer = ({ open, onClose }) => {
         ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         : "Now"
     };
-    
+
     // Update chat history
     setChatHistory(prev => {
       const updatedHistory = { ...prev };
@@ -237,7 +237,7 @@ const ChatDrawer = ({ open, onClose }) => {
         [sender]: (prev[sender] || 0) + 1
       }));
     }
-    
+
     // Update user list
     setUsers(prevUsers => {
       const userExists = prevUsers.some(user => user && user.username === sender);
@@ -281,7 +281,7 @@ const ChatDrawer = ({ open, onClose }) => {
       const userChatHistory = chatHistory[activeUser] || [];
       setMessages(userChatHistory);
       markMessagesAsRead(activeUser);
-      
+
       if (userChatHistory.length === 0) {
         loadChatHistory(activeUser);
       }
@@ -303,7 +303,7 @@ const ChatDrawer = ({ open, onClose }) => {
   // Send message handler
   const handleSend = async () => {
     if (!message.trim() || !activeUser) return;
-    
+
     if (connectionStatus !== 'connected') {
       antMessage.error("Cannot send - not connected to server");
       return;
@@ -474,23 +474,22 @@ const ChatDrawer = ({ open, onClose }) => {
       title={
         <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
           {(activeUser || isNewChat) && (
-            <Button 
-              type="text" 
-              icon={<ArrowLeftOutlined />} 
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
               onClick={handleBackToUserList}
               style={{ marginRight: 8 }}
               aria-label="Back to contacts"
             />
-          )}
-          <span>{activeUser || (isNewChat ? "New Chat" : "Chats")}</span>
-          <span style={{ 
+          )} <span>{activeUser || (isNewChat ? "New Chat" : "Chats")}</span>
+          <span style={{
             marginLeft: 'auto',
             width: 10,
             height: 10,
             borderRadius: '50%',
-            backgroundColor: connectionStatus === 'connected' ? '#52c41a' : 
-                           connectionStatus === 'connecting' ? '#faad14' : '#f5222d'
-          }} />
+            backgroundColor: connectionStatus === 'connected' ? '#52c41a' :
+            connectionStatus === 'connecting' ? '#faad14' : '#f5222d'
+          }} /> 
         </div>
       }
       placement="right"
@@ -501,10 +500,10 @@ const ChatDrawer = ({ open, onClose }) => {
       bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}
     >
       {connectionStatus !== 'connected' && (
-        <Alert 
+        <Alert
           message={
-            connectionStatus === 'connecting' 
-              ? "Connecting to chat server..." 
+            connectionStatus === 'connecting'
+              ? "Connecting to chat server..."
               : "Disconnected from server. Reconnecting..."
           }
           type={connectionStatus === 'connecting' ? 'warning' : 'error'}

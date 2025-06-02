@@ -30,7 +30,7 @@ const RequestStatusChart = ({ userName = "User" }) => {
   // Fetch data from the API on component mount
   useEffect(() => {
     axios
-      .get("http://localhost:8080/api/requests")
+      .get("http://localhost:8081/api/requests")
       .then((response) => {
         const requests = response.data; // Assuming API returns an array of requests
         const statusCount = {

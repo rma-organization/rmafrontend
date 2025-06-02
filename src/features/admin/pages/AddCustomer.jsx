@@ -17,7 +17,7 @@ import axios from "axios";
 
 const AddCustomer = () => {
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
 
   const [formData, setFormData] = useState({ name: "" });
   const [error, setError] = useState(null);

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Base API URL
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "http://localhost:8081/api";
 const INVENTORY_BASE_URL = `${BASE_URL}/inventory`;
 const REQUESTS_BASE_URL = `${BASE_URL}/requests`;
 const VENDOR_BASE_URL = `${BASE_URL}/vendors`;

@@ -45,7 +45,7 @@ const RequestDetailShow = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/requests/${id}`);
+        const response = await fetch(`http://localhost:8081/api/requests/${id}`);
         if (!response.ok) throw new Error("Failed to fetch data");
         const result = await response.json();
         setData(result);
