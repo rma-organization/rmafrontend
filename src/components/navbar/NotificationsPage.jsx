@@ -117,6 +117,211 @@
 //     </Box>
 //   );
 // }
+// import React, { useEffect, useState } from "react";
+// import {
+//   Box,
+//   Typography,
+//   Card,
+//   CardContent,
+//   CircularProgress,
+//   Alert,
+// } from "@mui/material";
+// import SockJS from "sockjs-client";
+// import { Client } from "@stomp/stompjs";
+
+// export default function NotificationsPage() {
+//   const [notifications, setNotifications] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+
+//   useEffect(() => {
+//     const token = localStorage.getItem("token");
+//     const username = localStorage.getItem("username");
+
+//     if (!username || !token) {
+//       setError("Missing credentials. Please log in.");
+//       setLoading(false);
+//       return;
+//     }
+
+//     // Fetch REST notifications
+//     const fetchNotifications = async () => {
+//       try {
+//         const response = await fetch("http://localhost:8080/api/notifications", {
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
+//         if (!response.ok) throw new Error("Failed to fetch notifications");
+//         const data = await response.json();
+//         setNotifications(data);
+//       } catch (err) {
+//         setError(err.message);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchNotifications();
+
+//     // Setup WebSocket connection
+//     const socket = new SockJS("http://localhost:8080/ws");
+//     const stompClient = new Client({
+//       webSocketFactory: () => socket,
+//       connectHeaders: {
+//         username,
+//         Authorization: `Bearer ${token}`,
+//       },
+//       onConnect: () => {
+//         console.log("✅ Connected to WebSocket");
+
+//         stompClient.subscribe("/user/queue/notifications", (message) => {
+//           const newNotification = JSON.parse(message.body);
+//           setNotifications((prev) => {
+//             const exists = prev.some((n) => n.id === newNotification.id);
+//             return exists ? prev : [newNotification, ...prev];
+//           });
+//         });
+//       },
+//       onStompError: (frame) => {
+//         console.error("STOMP error:", frame.headers["message"]);
+//         setError("WebSocket STOMP error");
+//       },
+//       onWebSocketError: () => {
+//         console.error("WebSocket error");
+//         setError("WebSocket connection failed");
+//       },
+//     });
+
+//     stompClient.activate();
+//     return () => stompClient.deactivate();
+//   }, []);
+
+//   return (
+//     <Box sx={{ p: 4, backgroundColor: "#f9f9f9", minHeight: "100vh" }}>
+//       <Typography variant="h4" gutterBottom>Notifications</Typography>
+//       {loading && <CircularProgress />}
+//       {error && <Alert severity="error">{error}</Alert>}
+//       {!loading && notifications.length === 0 && (
+//         <Typography>No notifications found.</Typography>
+//       )}
+//       <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+//         {notifications.map((n) => (
+//           <Card key={n.id}>
+//             <CardContent>
+//               <Typography variant="h6">{n.type}</Typography>
+//               <Typography variant="body2">{n.message}</Typography>
+//               <Typography variant="caption" color="textSecondary">
+//                 {new Date(n.timestamp).toLocaleString()}
+//               </Typography>
+//             </CardContent>
+//           </Card>
+//         ))}
+//       </Box>
+//     </Box>
+//   );
+// }
+
+
+// import React, { useEffect, useState } from "react";
+// import {
+//   Box,
+//   Typography,
+//   Card,
+//   CardContent,
+//   CircularProgress,
+//   Alert,
+// } from "@mui/material";
+// import SockJS from "sockjs-client";
+// import { Client } from "@stomp/stompjs";
+
+// export default function NotificationsPage() {
+//   const [notifications, setNotifications] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+
+//   useEffect(() => {
+//     const token = localStorage.getItem("token");
+//     const username = localStorage.getItem("username");
+
+//     if (!username || !token) {
+//       setError("Missing credentials. Please log in.");
+//       setLoading(false);
+//       return;
+//     }
+
+//     const fetchNotifications = async () => {
+//       try {
+//         const response = await fetch("http://localhost:8080/api/notifications", {
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
+//         if (!response.ok) throw new Error("Failed to fetch notifications");
+//         const data = await response.json();
+//         setNotifications(data);
+//       } catch (err) {
+//         setError(err.message);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchNotifications();
+
+//     const socket = new SockJS("http://localhost:8080/ws");
+//     const stompClient = new Client({
+//       webSocketFactory: () => socket,
+//       connectHeaders: {
+//         username,
+//         Authorization: `Bearer ${token}`,
+//       },
+//       onConnect: () => {
+//         console.log("✅ WebSocket connected");
+//         stompClient.subscribe("/user/queue/notifications", (msg) => {
+//           const newNotification = JSON.parse(msg.body);
+//           setNotifications((prev) => [newNotification, ...prev]);
+//         });
+//       },
+//       onStompError: (frame) => {
+//         console.error("STOMP error:", frame.headers["message"]);
+//         setError("WebSocket STOMP error");
+//       },
+//       onWebSocketError: () => {
+//         setError("WebSocket connection failed");
+//       },
+//     });
+
+//     stompClient.activate();
+//     return () => stompClient.deactivate();
+//   }, []);
+
+//   return (
+//     <Box sx={{ p: 4, backgroundColor: "#f9f9f9", minHeight: "100vh" }}>
+//       <Typography variant="h4" gutterBottom>Notifications</Typography>
+//       {loading && <CircularProgress />}
+//       {error && <Alert severity="error">{error}</Alert>}
+//       {!loading && notifications.length === 0 && (
+//         <Typography>No notifications found.</Typography>
+//       )}
+//       <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+//         {notifications.map((n) => (
+//           <Card key={n.id}>
+//             <CardContent>
+//               <Typography variant="h6">{n.type}</Typography>
+//               <Typography variant="body2">{n.message}</Typography>
+//               <Typography variant="caption" color="textSecondary">
+//                 {new Date(n.timestamp).toLocaleString()}
+//               </Typography>
+//             </CardContent>
+//           </Card>
+//         ))}
+//       </Box>
+//     </Box>
+//   );
+// }
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -136,24 +341,28 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const username = localStorage.getItem("username");
+    const role = localStorage.getItem("role");
 
-    if (!username || !token) {
-      setError("Missing credentials. Please log in.");
+    if (!token || !role) {
+      setError("Missing credentials or role. Please log in.");
       setLoading(false);
       return;
     }
 
-    // Fetch REST notifications
     const fetchNotifications = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/notifications", {
+        const response = await fetch("http://localhost:8080/api/notifications/role", {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
+            Role: role
           },
         });
-        if (!response.ok) throw new Error("Failed to fetch notifications");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch notifications");
+        }
+
         const data = await response.json();
         setNotifications(data);
       } catch (err) {
@@ -165,54 +374,59 @@ export default function NotificationsPage() {
 
     fetchNotifications();
 
-    // Setup WebSocket connection
-    const socket = new SockJS("http://localhost:8080/ws");
     const stompClient = new Client({
-      webSocketFactory: () => socket,
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
       connectHeaders: {
-        username,
         Authorization: `Bearer ${token}`,
       },
+      reconnectDelay: 5000,
       onConnect: () => {
-        console.log("✅ Connected to WebSocket");
+        console.log("Connected to WebSocket");
 
-        stompClient.subscribe("/user/queue/notifications", (message) => {
+        // Subscribe to role-based topic
+        stompClient.subscribe(`/topic/notifications/${role.toLowerCase()}`, (message) => {
           const newNotification = JSON.parse(message.body);
-          setNotifications((prev) => {
-            const exists = prev.some((n) => n.id === newNotification.id);
-            return exists ? prev : [newNotification, ...prev];
-          });
+          setNotifications((prev) => [newNotification, ...prev]);
         });
       },
       onStompError: (frame) => {
-        console.error("STOMP error:", frame.headers["message"]);
-        setError("WebSocket STOMP error");
+        console.error("STOMP error", frame.headers["message"]);
+        setError("STOMP error occurred.");
       },
       onWebSocketError: () => {
-        console.error("WebSocket error");
-        setError("WebSocket connection failed");
+        setError("WebSocket connection failed.");
       },
     });
 
     stompClient.activate();
-    return () => stompClient.deactivate();
+
+    return () => {
+      stompClient.deactivate();
+    };
   }, []);
 
   return (
     <Box sx={{ p: 4, backgroundColor: "#f9f9f9", minHeight: "100vh" }}>
-      <Typography variant="h4" gutterBottom>Notifications</Typography>
+      <Typography variant="h4" gutterBottom>
+        Notifications
+      </Typography>
+
       {loading && <CircularProgress />}
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
       {!loading && notifications.length === 0 && (
         <Typography>No notifications found.</Typography>
       )}
+
       <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
         {notifications.map((n) => (
-          <Card key={n.id}>
+          <Card key={n.id} elevation={3}>
             <CardContent>
               <Typography variant="h6">{n.type}</Typography>
-              <Typography variant="body2">{n.message}</Typography>
-              <Typography variant="caption" color="textSecondary">
+              <Typography variant="body2" sx={{ my: 1 }}>
+                {n.message}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
                 {new Date(n.timestamp).toLocaleString()}
               </Typography>
             </CardContent>
