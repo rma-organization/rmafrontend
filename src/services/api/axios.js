@@ -1,7 +1,46 @@
-// src/services/axiosInstance.js
-import axios from 'axios';
+// // src/services/axiosInstance.js
+// import axios from "axios";
 
-// Use Vite environment variable with fallback
+// // Use Vite environment variable with fallback
+// const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+// const axiosInstance = axios.create({
+//   baseURL: apiUrl,
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+// });
+
+// // ✅ Attach the token to every request
+// axiosInstance.interceptors.request.use(
+//   (config) => {
+//     const token = localStorage.getItem("token");
+//     if (token) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
+//     return config;
+//   },
+//   (error) => Promise.reject(error)
+// );
+
+// // Optional: handle common error responses
+// axiosInstance.interceptors.response.use(
+//   (response) => response,
+//   (error) => {
+//     if (error.response?.status === 401) {
+//       console.warn("Unauthorized - possibly invalid or expired token.");
+//     } else if (error.response?.status === 403) {
+//       console.warn("Forbidden - not allowed to access this resource.");
+//     }
+//     return Promise.reject(error);
+//   }
+// );
+
+// export default axiosInstance;
+
+
+import axios from "axios";
+
 const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const axiosInstance = axios.create({
@@ -11,27 +50,31 @@ const axiosInstance = axios.create({
   },
 });
 
-axiosInstance.interceptors.response.use(
-  (response) => {
-    console.log("Response received: ", response);
-    return response;
+// Attach token to every request if exists
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
+  (error) => Promise.reject(error)
+);
+
+// Handle common response errors
+axiosInstance.interceptors.response.use(
+  (response) => response,
   (error) => {
-    if (error.response) {
-      console.error("Server error: ", error.response.data);
-      if (error.response.status === 401) {
-        console.error("Unauthorized access - Redirecting to login...");
-        // Add redirect logic if needed
-      } else if (error.response.status === 500) {
-        console.error("Internal server error");
-      }
-    } else if (error.request) {
-      console.error("No response received: ", error.request);
-    } else {
-      console.error("Error during request setup: ", error.message);
+    if (error.response?.status === 401) {
+      console.warn("Unauthorized - possibly invalid or expired token.");
+    } else if (error.response?.status === 403) {
+      console.warn("Forbidden - not allowed to access this resource.");
     }
     return Promise.reject(error);
   }
 );
 
 export default axiosInstance;
+
+
