@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import {
@@ -13,26 +12,25 @@ import {
 } from "@mui/material";
 import WavingHandIcon from "@mui/icons-material/WavingHand";
 import SearchIcon from "@mui/icons-material/Search";
-import axios from "axios";
+import axiosInstance from "../../../services/api/axios"; // ✅ Make sure path is correct
 
-// Pie chart data structure for different request statuses
 const COLORS = ["#28a745", "#dc3545", "#6f42c1", "#007bff"];
 
 const RequestStatusChart = ({ userName = "User" }) => {
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
-  const [data, setData] = useState([]); // State to hold the request status data
-  const [loading, setLoading] = useState(true); // State for loading status
+  const [searchQuery, setSearchQuery] = useState("");
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value); // Update search query
+    setSearchQuery(e.target.value);
   };
 
-  // Fetch data from the API on component mount
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/requests")
+    axiosInstance
+      .get("/api/requests")
       .then((response) => {
-        const requests = response.data; // Assuming API returns an array of requests
+        const requests = response.data;
+
         const statusCount = {
           Approved: 0,
           Rejected: 0,
@@ -40,7 +38,6 @@ const RequestStatusChart = ({ userName = "User" }) => {
           "En Route": 0,
         };
 
-        // Calculate counts for each status
         requests.forEach((request) => {
           if (request.status === "Approved") statusCount.Approved += 1;
           else if (request.status === "Rejected") statusCount.Rejected += 1;
@@ -48,7 +45,6 @@ const RequestStatusChart = ({ userName = "User" }) => {
           else if (request.status === "En Route") statusCount["En Route"] += 1;
         });
 
-        // Update the state with the calculated counts
         setData([
           { name: "Approved", value: statusCount.Approved },
           { name: "Rejected", value: statusCount.Rejected },
@@ -91,7 +87,7 @@ const RequestStatusChart = ({ userName = "User" }) => {
             sx={{ ml: 1, flex: 1 }}
             placeholder="Search Requests"
             inputProps={{ "aria-label": "search requests" }}
-            value={searchQuery} // Controlled input
+            value={searchQuery}
             onChange={handleSearchChange}
           />
           <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
@@ -133,7 +129,6 @@ const RequestStatusChart = ({ userName = "User" }) => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              {/* Custom Tooltip for showing percentage */}
               <Tooltip
                 content={({ payload }) => {
                   if (payload && payload.length) {
@@ -141,7 +136,7 @@ const RequestStatusChart = ({ userName = "User" }) => {
                     const totalValue = data.reduce((acc, entry) => acc + entry.value, 0);
                     const percentage = ((value / totalValue) * 100).toFixed(2);
                     return (
-                      <div className="custom-tooltip">
+                      <div className="custom-tooltip" style={{ background: "white", padding: "8px", border: "1px solid #ccc" }}>
                         <strong>{name}</strong>
                         <div>{`Value: ${value}`}</div>
                         <div>{`Percentage: ${percentage}%`}</div>

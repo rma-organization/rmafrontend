@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -17,8 +17,39 @@ import {
 } from "@mui/icons-material";
 
 export default function NavBar() {
-  const messageCount = 2; // Static or mock value
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || !role) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/api/notifications/unread-count", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        });
+
+        if (res.ok) {
+          const count = await res.json();
+          setUnreadCount(count);
+        }
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Optionally poll every 30 seconds for updates
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -44,15 +75,16 @@ export default function NavBar() {
           >
             <Toolbar sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                {/* 👉 Navigate to notifications page */}
+                {/* Notifications */}
                 <IconButton onClick={() => navigate("/notifications")}>
-                  <Badge badgeContent={0} color="error">
+                  <Badge badgeContent={unreadCount} color="error">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
 
+                {/* Messages placeholder */}
                 <IconButton>
-                  <Badge badgeContent={messageCount} color="error">
+                  <Badge badgeContent={2} color="error">
                     <MailIcon />
                   </Badge>
                 </IconButton>
@@ -60,6 +92,7 @@ export default function NavBar() {
                 <Typography fontWeight="bold">Suranjan Nayanjith</Typography>
                 <AccountCircle />
 
+                {/* Logout */}
                 <Button
                   variant="contained"
                   color="error"
@@ -82,7 +115,9 @@ export default function NavBar() {
               backgroundColor: "#f5f5f5",
               minHeight: "100vh",
             }}
-          ></Box>
+          >
+            {/* Page content goes here */}
+          </Box>
         </Box>
       </Box>
     </>

@@ -349,7 +349,7 @@
 //   }
 // };
 // src/services/apiService.js
-
+// src/services/apiService.js
 import axiosInstance from "./axios";
 
 const BASE_URL = "/api";
@@ -358,7 +358,7 @@ const REQUESTS_BASE_URL = `${BASE_URL}/requests`;
 const VENDOR_BASE_URL = `${BASE_URL}/vendors`;
 const NOTIFICATION_BASE_URL = `${BASE_URL}/notifications`;
 
-// INVENTORY
+// ========== INVENTORY ==========
 export const listInventory = async () => {
   try {
     const [inventoryRes, vendorRes] = await Promise.all([
@@ -392,7 +392,7 @@ export const softDeleteInventory = (id) =>
 export const updateVendorService = (inventoryId, vendorId) =>
   axiosInstance.put(`${INVENTORY_BASE_URL}/${inventoryId}/vendor/${vendorId}`);
 
-// REQUESTS
+// ========== REQUESTS ==========
 export const listRequests = async () => {
   const response = await axiosInstance.get(REQUESTS_BASE_URL);
   return response.data.map((r) => ({
@@ -405,26 +405,18 @@ export const listRequests = async () => {
 
 export const getRequestById = (id) => axiosInstance.get(`${REQUESTS_BASE_URL}/${id}`);
 
-export const updateRequestStatus = async (requestId, status, role = "engineer") => {
-  return axiosInstance.put(
-    `${REQUESTS_BASE_URL}/${requestId}/status`,
-    { status },
-    {
-      headers: { Role: role },
-    }
-  );
+export const updateRequestStatus = async (requestId, status) => {
+  return axiosInstance.put(`${REQUESTS_BASE_URL}/${requestId}/status`, { status });
 };
 
-// NOTIFICATIONS
+// ========== NOTIFICATIONS ==========
 export const sendNotification = ({ receiverRole, message, type, status }) =>
   axiosInstance.post(`${NOTIFICATION_BASE_URL}/send`, null, {
     params: { receiverRole, message, type, status },
   });
 
-export const getRoleNotifications = (role) =>
-  axiosInstance.get(`${NOTIFICATION_BASE_URL}/role`, {
-    headers: { Role: role },
-  });
+export const getRoleNotifications = () =>
+  axiosInstance.get(`${NOTIFICATION_BASE_URL}/role`);
 
 export const getUserNotifications = () =>
   axiosInstance.get(`${NOTIFICATION_BASE_URL}/user`);

@@ -1,27 +1,32 @@
 import React from "react";
-import { Box } from "@mui/material";
+import { Box, useMediaQuery, Toolbar } from "@mui/material";
 import NavBar from "./components/navbar/NavBar";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./components/navbar/Sidebar";
-const MainLayout = () => {
-  return (
-    <Box display="flex" height="100vh" width="100vw">
-      {/* Sidebar */}
-      <Box width="320px">
-        <Sidebar />
-      </Box>
 
-      {/* Main Content Area */}
-      <Box flexGrow={1} display="flex" flexDirection="column">
-        {/* Navbar */}
-        <Box height="64px" width="calc(100vw - 320px)">
-          {/* You can include NavBar here */}
-           <NavBar /> 
+const MainLayout = () => {
+  const isMobile = useMediaQuery('(max-width:900px)');
+
+  return (
+    <Box display="flex" width="100vw">
+      {/* Sidebar only takes space on large screens */}
+      {!isMobile && (
+        <Box width="320px">
+          <Sidebar />
+        </Box>
+      )}
+
+      {/* Main Content */}
+      <Box flexGrow={1} display="flex" flexDirection="column" height="100vh">
+        <Box height="64px" width="100%">
+          <NavBar />
         </Box>
 
-        {/* Page Content */}
-        <Box flexGrow={1} padding={2} bgcolor="Snow">
-          <Outlet /> {/* Nested Routes Render Here */}
+        {/* Spacer under AppBar on mobile */}
+        {isMobile && <Toolbar />}
+
+        <Box flexGrow={1} overflow="auto" p={2} bgcolor="#f9f9f9">
+          <Outlet />
         </Box>
       </Box>
     </Box>
