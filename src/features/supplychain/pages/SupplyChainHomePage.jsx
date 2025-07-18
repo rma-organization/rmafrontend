@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import {
   Box,
   Typography,
@@ -12,14 +19,30 @@ import {
 } from "@mui/material";
 import WavingHandIcon from "@mui/icons-material/WavingHand";
 import SearchIcon from "@mui/icons-material/Search";
-import axiosInstance from "../../../services/api/axios"; // ✅ Make sure path is correct
+import axiosInstance from "../../../services/api/axios";
+import { jwtDecode } from "jwt-decode";
 
-const COLORS = ["#28a745", "#dc3545", "#6f42c1", "#007bff"];
+const COLORS = ["#4CAF50", "#F44336", "#FFC107", "#2196F3"];
 
-const RequestStatusChart = ({ userName = "User" }) => {
+const RequestStatusChart = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState("User");
+
+  // 🔐 Decode JWT and get username
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        const name = decoded?.sub || decoded?.username || "User";
+        setUserName(name);
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    }
+  }, []);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -60,28 +83,36 @@ const RequestStatusChart = ({ userName = "User" }) => {
   }, []);
 
   return (
-    <Box p={2} mt={5}>
+    <Box px={3} py={5} sx={{ backgroundColor: "#f5f7fa", minHeight: "100vh" }}>
       {/* Welcome Banner */}
       <Box
         sx={{
-          bgcolor: "lightgray",
-          height: "70px",
+          bgcolor: "#ffffff",
+          borderRadius: 3,
+          boxShadow: 2,
+          height: "80px",
           display: "flex",
           alignItems: "center",
-          pl: 3,
+          px: 3,
         }}
       >
-        <Typography variant="h5" fontWeight="bold" color="black">
+        <Typography variant="h5" fontWeight="600" color="primary">
           Welcome, {userName}
         </Typography>
-        <WavingHandIcon sx={{ color: "gold", ml: 2 }} />
+        <WavingHandIcon sx={{ color: "#ffca28", ml: 2, fontSize: 30 }} />
       </Box>
 
       {/* Search Bar */}
-      <Box sx={{ mx: "auto", mt: 5, width: "fit-content" }}>
+      <Box sx={{ mt: 4, mx: "auto", width: "100%", maxWidth: 500 }}>
         <Paper
           component="form"
-          sx={{ p: "2px 4px", display: "flex", alignItems: "center", width: 400 }}
+          sx={{
+            p: "6px 12px",
+            display: "flex",
+            alignItems: "center",
+            borderRadius: 3,
+            boxShadow: 1,
+          }}
         >
           <InputBase
             sx={{ ml: 1, flex: 1 }}
@@ -100,54 +131,63 @@ const RequestStatusChart = ({ userName = "User" }) => {
       {/* Pie Chart */}
       <Card
         sx={{
-          width: "100%",
-          maxWidth: 400,
-          p: 2,
-          textAlign: "center",
+          maxWidth: 500,
+          mt: 5,
           mx: "auto",
-          mt: 3,
+          borderRadius: 3,
+          boxShadow: 3,
+          p: 3,
         }}
       >
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Request Status
+          <Typography variant="h6" fontWeight="bold" gutterBottom textAlign="center">
+            Request Status Distribution
           </Typography>
           {loading ? (
-            <Typography>Loading...</Typography>
+            <Typography textAlign="center">Loading...</Typography>
           ) : (
-            <PieChart width={300} height={300}>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-                label
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                content={({ payload }) => {
-                  if (payload && payload.length) {
-                    const { name, value } = payload[0];
-                    const totalValue = data.reduce((acc, entry) => acc + entry.value, 0);
-                    const percentage = ((value / totalValue) * 100).toFixed(2);
-                    return (
-                      <div className="custom-tooltip" style={{ background: "white", padding: "8px", border: "1px solid #ccc" }}>
-                        <strong>{name}</strong>
-                        <div>{`Value: ${value}`}</div>
-                        <div>{`Percentage: ${percentage}%`}</div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Legend />
-            </PieChart>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ payload }) => {
+                    if (payload && payload.length) {
+                      const { name, value } = payload[0];
+                      const totalValue = data.reduce((acc, entry) => acc + entry.value, 0);
+                      const percentage = ((value / totalValue) * 100).toFixed(2);
+                      return (
+                        <Box
+                          sx={{
+                            backgroundColor: "#fff",
+                            border: "1px solid #ccc",
+                            p: 1,
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography fontWeight="bold">{name}</Typography>
+                          <Typography variant="body2">Value: {value}</Typography>
+                          <Typography variant="body2">Percentage: {percentage}%</Typography>
+                        </Box>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend verticalAlign="bottom" height={36} />
+              </PieChart>
+            </ResponsiveContainer>
           )}
         </CardContent>
       </Card>

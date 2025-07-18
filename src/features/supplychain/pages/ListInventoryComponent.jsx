@@ -245,7 +245,6 @@
 // };
 
 // export default ListRequestsComponent;
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -264,7 +263,7 @@ import {
   CircularProgress,
   Pagination,
 } from "@mui/material";
-import { listRequests, updateRequestStatus } from "../../../services/api/InventoryServices";
+import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
 import { Link, useNavigate } from "react-router-dom";
 
 const ListRequestsComponent = () => {
@@ -284,9 +283,9 @@ const ListRequestsComponent = () => {
       try {
         const data = await listRequests();
         setRequests(data);
-      } catch (err) {
+      } catch (error) {
         setError("Error fetching requests.");
-        console.error(err);
+        console.error("Error fetching requests:", error);
       } finally {
         setLoading(false);
       }
@@ -305,36 +304,53 @@ const ListRequestsComponent = () => {
   const handleSave = async (rowId) => {
     try {
       const updatedStatus = tempStatus[rowId];
+      const token = localStorage.getItem("token");
+      const username = localStorage.getItem("username");
 
-      // All notifications go to 'engineer'
-      const role = "engineer";
+      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: updatedStatus }),
+      });
 
-      const currentRow = requests.find((r) => r.id === rowId);
-      console.log("🔔 Notification status:", currentRow?.status);
+      if (!response.ok) {
+        throw new Error("Failed to update request.");
+      }
 
-      await updateRequestStatus(rowId, updatedStatus);
-
-      setRequests((prev) =>
-        prev.map((r) => (r.id === rowId ? { ...r, status: updatedStatus } : r))
+      setRequests((prevRequests) =>
+        prevRequests.map((req) =>
+          req.id === rowId ? { ...req, status: updatedStatus } : req
+        )
       );
       setEditRowId(null);
-      setSuccessMessage("Request status updated successfully!");
-    } catch (err) {
-      setError("Failed to update status.");
-      console.error(err);
+      setSuccessMessage("Request updated successfully!");
+
+      // 🔔 Send Notification to engineer
+      const message = `Request ID ${rowId} status updated to ${updatedStatus}`;
+      await sendNotification({
+        receiverRole: "engineer",
+        message,
+        type: "STATUS_UPDATE",
+        status: updatedStatus,
+        senderUsername: username || "system",
+      });
+    } catch (error) {
+      console.error("Error updating request or sending notification:", error);
     }
   };
 
-  const handleShow = (rowId) => navigate(`/show/${rowId}`);
-
-  const formatDate = (dateString) =>
-    dateString ? new Date(dateString).toLocaleDateString() : "N/A";
-
-  const handleCloseSnackbar = () => {
-    setSuccessMessage(null);
-    setError(null);
+  const handleShow = (rowId) => {
+    navigate(`/show/${rowId}`);
   };
 
+  const formatDate = (dateString) => {
+    return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
+  };
+
+  const handleCloseSnackbar = () => setSuccessMessage(null);
   const handlePageChange = (_, newPage) => setPage(newPage);
 
   const paginatedRequests = requests.slice((page - 1) * rowsPerPage, page * rowsPerPage);
@@ -355,21 +371,20 @@ const ListRequestsComponent = () => {
   return (
     <>
       <Snackbar
-        open={Boolean(successMessage || error)}
+        open={Boolean(successMessage)}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        message={successMessage || error}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        message={successMessage}
       />
 
       <Box p={2} mt={10}>
-        <Button variant="contained" component={Link} to="/engineer-home">
+        <Button variant="contained" component={Link} to="/supply-chain-home">
           Home
         </Button>
 
-        <Box bgcolor="lightgray" p={2} mt={4} borderRadius={1}>
-          <Typography variant="h6" fontWeight="bold" color="black" mb={2}>
-            Requests List 
+        <Box bgcolor="lightgray" p={2} mt={10} borderRadius={1}>
+          <Typography variant="h6" fontWeight="bold" color="black" mt={4}>
+            Requests List
           </Typography>
 
           {loading ? (
@@ -378,8 +393,6 @@ const ListRequestsComponent = () => {
             <Typography variant="body1" color="error" mt={2}>
               {error}
             </Typography>
-          ) : requests.length === 0 ? (
-            <Typography>No requests found.</Typography>
           ) : (
             <>
               <Paper style={{ width: "100%", marginTop: 20 }}>

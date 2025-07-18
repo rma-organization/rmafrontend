@@ -1,3 +1,4 @@
+// src/features/supplychain/pages/RequestDetailShow.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -16,7 +17,8 @@ import { styled } from "@mui/material/styles";
 import { tableCellClasses } from "@mui/material/TableCell";
 import { Link, useParams } from "react-router-dom";
 
-// Styled Components for Table
+import { getRequestById } from "../../../services/api/InventoryServices";
+
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.primary.dark,
@@ -43,35 +45,50 @@ const RequestDetailShow = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchRequest = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/requests/${id}`);
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const result = await response.json();
-        setData(result);
+        const response = await getRequestById(id);
+        setData(response.data);
       } catch (err) {
-        setError(err.message);
+        setError(
+          err.response?.data?.message || err.message || "Failed to fetch request"
+        );
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchRequest();
   }, [id]);
 
-  if (loading) return <CircularProgress />;
-  if (error) return <Typography color="error">{error}</Typography>;
-  if (!data) return <Typography>No data available</Typography>;
+  if (loading)
+    return (
+      <Box mt={10} display="flex" justifyContent="center">
+        <CircularProgress />
+      </Box>
+    );
+
+  if (error)
+    return (
+      <Typography color="error" mt={10} textAlign="center">
+        {error}
+      </Typography>
+    );
+
+  if (!data)
+    return (
+      <Typography mt={10} textAlign="center">
+        No data available
+      </Typography>
+    );
 
   return (
     <Box p={2} mt={10}>
-      {/* Inventory Section */}
       <Box bgcolor="lightgray" p={2} borderRadius={1}>
-        {/* Title */}
         <Typography variant="h6" fontWeight="bold" color="black" mt={2}>
           Request Details
         </Typography>
 
-        {/* Back Button */}
         <Button
           variant="contained"
           disableElevation
@@ -82,22 +99,32 @@ const RequestDetailShow = () => {
           Back
         </Button>
 
-        {/* Info Section */}
         <Paper sx={{ padding: 3, mt: 2 }}>
-          <Box textAlign="right">
-            <Typography variant="h5" fontWeight="bold">Last Update</Typography>
-            <Typography variant="h6">{new Date(data.updatedAt).toLocaleDateString()}</Typography>
-          </Box>
-          <Box textAlign="right">
-            <Typography variant="h5" fontWeight="bold">Status</Typography>
-            <Typography variant="h6">{data.status}</Typography>
+          <Box display="flex" justifyContent="space-between">
+            <Box>
+              <Typography variant="h5" fontWeight="bold">
+                Last Update
+              </Typography>
+              <Typography variant="h6">
+                {data.updatedAt
+                  ? new Date(data.updatedAt).toLocaleDateString()
+                  : "N/A"}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="h5" fontWeight="bold">
+                Status
+              </Typography>
+              <Typography variant="h6">{data.status || "N/A"}</Typography>
+            </Box>
           </Box>
 
-          {/* First Table: Inventory Items */}
           <Box mt={3}>
-            <Typography variant="h6" fontWeight="bold">Request Item</Typography>
+            <Typography variant="h6" fontWeight="bold">
+              Request Item
+            </Typography>
             <TableContainer component={Paper} sx={{ mt: 2 }}>
-              <Table sx={{ minWidth: 700 }} aria-label="customized table">
+              <Table sx={{ minWidth: 700 }}>
                 <TableHead>
                   <TableRow>
                     <StyledTableCell>Item Name</StyledTableCell>
@@ -110,11 +137,11 @@ const RequestDetailShow = () => {
                 </TableHead>
                 <TableBody>
                   <StyledTableRow>
-                    <StyledTableCell component="th" scope="row">{data.name}</StyledTableCell>
+                    <StyledTableCell>{data.name}</StyledTableCell>
                     <StyledTableCell>{data.customer?.name || "N/A"}</StyledTableCell>
                     <StyledTableCell>{data.vendor?.name || "N/A"}</StyledTableCell>
-                    <StyledTableCell>{data.srNumber}</StyledTableCell>
-                    <StyledTableCell>{data.mailIds}</StyledTableCell>
+                    <StyledTableCell>{data.srNumber || "N/A"}</StyledTableCell>
+                    <StyledTableCell>{data.mailIds || "N/A"}</StyledTableCell>
                     <StyledTableCell>{data.description || "No description"}</StyledTableCell>
                   </StyledTableRow>
                 </TableBody>
@@ -122,10 +149,12 @@ const RequestDetailShow = () => {
             </TableContainer>
           </Box>
 
-          {/* Second Table: Service Requests */}
           <Box mt={3} width={700}>
+            <Typography variant="h6" fontWeight="bold">
+              Fault & Task Info
+            </Typography>
             <TableContainer component={Paper} sx={{ mt: 2 }}>
-              <Table sx={{ minWidth: 400 }} aria-label="customized table">
+              <Table sx={{ minWidth: 400 }}>
                 <TableHead>
                   <TableRow>
                     <StyledTableCell>Fault Part Number</StyledTableCell>
@@ -134,8 +163,8 @@ const RequestDetailShow = () => {
                 </TableHead>
                 <TableBody>
                   <StyledTableRow>
-                    <StyledTableCell>{data.faultPartNumber}</StyledTableCell>
-                    <StyledTableCell>{data.fieldServiceTaskNumber}</StyledTableCell>
+                    <StyledTableCell>{data.faultPartNumber || "N/A"}</StyledTableCell>
+                    <StyledTableCell>{data.fieldServiceTaskNumber || "N/A"}</StyledTableCell>
                   </StyledTableRow>
                 </TableBody>
               </Table>

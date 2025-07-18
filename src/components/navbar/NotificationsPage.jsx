@@ -169,16 +169,26 @@ export default function NotificationsPanel() {
               </ListItemAvatar>
               <ListItemText
                 primary={
-                  <Typography fontWeight="bold" color="white">
+                  <Typography fontWeight="bold" color="white" component="span">
                     {n.type}
                   </Typography>
                 }
                 secondary={
                   <>
-                    <Typography variant="body2" color="gray">
+                    <Typography
+                      variant="body2"
+                      color="gray"
+                      component="span"
+                      display="block"
+                    >
                       {n.message}
                     </Typography>
-                    <Typography variant="caption" color="gray">
+                    <Typography
+                      variant="caption"
+                      color="gray"
+                      component="span"
+                      display="block"
+                    >
                       {formatDistanceToNow(new Date(n.timestamp), { addSuffix: true })}
                     </Typography>
                   </>
