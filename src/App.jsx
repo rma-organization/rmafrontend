@@ -1,6 +1,6 @@
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-
+import ResetPasswordPage from './features/authentication/pages/ResetPasswordPage';
 import SplashScreen from "./features/authentication/pages/SplashScreen";
 import LoginPage from "./features/authentication/pages/LoginPage";
 import SignUpPage from "./features/authentication/pages/SignUpPage";
@@ -98,6 +98,7 @@ function App() {
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
 
             <Route element={<ProtectedRoute user={user} />}>

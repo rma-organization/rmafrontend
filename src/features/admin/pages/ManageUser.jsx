@@ -107,14 +107,16 @@ const ManageUser = () => {
         </Typography>
 
         {/* Virtualized table */}
-        <Paper style={{ height: 300, width: "100%", marginTop: 10 }}>
-          <TableVirtuoso
-            data={paginatedData}
-            components={VirtuosoTableComponents}
-            fixedHeaderContent={fixedHeaderContent}
-            itemContent={rowContent}
-          />
-
+        <Paper sx={{ width: '100%', minHeight: '60vh', height: '100%', marginTop: 2, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
+          <Box sx={{ flex: 1, minHeight: '0' }}>
+            <TableVirtuoso
+              data={paginatedData}
+              components={VirtuosoTableComponents}
+              fixedHeaderContent={fixedHeaderContent}
+              itemContent={rowContent}
+              style={{ height: '100%', minHeight: '50vh' }}
+            />
+          </Box>
           {/* Pagination controls */}
           <Box display="flex" justifyContent="flex-end" mt={2} p={2}>
             <Pagination
