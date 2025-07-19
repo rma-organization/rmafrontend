@@ -15,12 +15,12 @@ import {
 import { TableVirtuoso } from "react-virtuoso";
 import { useNavigate } from "react-router-dom";
 
-// Columns configuration
+// Table column configuration
 const columns = [
   { width: 25, label: "ID", dataKey: "id" },
-  { width: 150, label: "Name", dataKey: "username" }, // Changed from 'name' to 'username'
+  { width: 150, label: "Name", dataKey: "username" },
   { width: 120, label: "Email", dataKey: "email" },
-  { width: 100, label: "Role", dataKey: "roles" }, // 'roles' is an array, needs special handling
+  { width: 100, label: "Role", dataKey: "roles" },
   { width: 150, label: "Approval Status", dataKey: "approvalStatus" },
 ];
 
@@ -30,18 +30,11 @@ const ManageUser = () => {
   const itemsPerPage = 10;
   const navigate = useNavigate();
 
-  // Bearer token for authentication
-  const bearerToken = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJuZXd1c2VyIiwiaWF0IjoxNzQyOTg3NjQ2LCJleHAiOjE3NDMwMjM2NDZ9.8zawyzLeXZK0weg05fM7s4kJwpxN5iiA0ibBKL8dm_E";
-
-  // Fetch users dynamically
+  // Fetch users without authentication
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/auth/users", {
-          headers: {
-            "Authorization": bearerToken, // Add Bearer token for authentication
-          },
-        });
+        const response = await fetch("http://localhost:8080/api/auth/users"); // ✅ No Authorization header
         const data = await response.json();
         setUsers(data);
       } catch (error) {
@@ -51,15 +44,12 @@ const ManageUser = () => {
     fetchUsers();
   }, []);
 
-  // Pagination handler
   const handlePageChange = (_event, newPage) => {
     setPage(newPage);
   };
 
-  // Paginate data
   const paginatedData = users.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
-  // Custom Table Components for react-virtuoso
   const VirtuosoTableComponents = {
     Scroller: React.forwardRef((props, ref) => (
       <TableContainer component={Paper} {...props} ref={ref} />
@@ -70,7 +60,6 @@ const ManageUser = () => {
     TableBody: React.forwardRef((props, ref) => <TableBody {...props} ref={ref} />),
   };
 
-  // Fixed Table Header
   const fixedHeaderContent = () => (
     <TableRow>
       {columns.map((column) => (
@@ -87,20 +76,13 @@ const ManageUser = () => {
     </TableRow>
   );
 
-  // Row Content Function
   const rowContent = (_index, row) => (
     <>
       {columns.map((column) => (
         <TableCell key={column.dataKey} align="left">
-          {column.dataKey === "roles" ? (
-            row[column.dataKey].join(", ") // Displaying roles as a comma-separated list
-          ) : (
-            row[column.dataKey] !== undefined && row[column.dataKey] !== null ? (
-              String(row[column.dataKey])
-            ) : (
-              "N/A"
-            )
-          )}
+          {column.dataKey === "roles"
+            ? row[column.dataKey]?.join(", ")
+            : row[column.dataKey] ?? "N/A"}
         </TableCell>
       ))}
     </>
@@ -138,4 +120,3 @@ const ManageUser = () => {
 };
 
 export default ManageUser;
-

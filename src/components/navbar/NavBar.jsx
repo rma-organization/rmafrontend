@@ -87,6 +87,66 @@ export default function NavBar() {
     fetchNotifications();
   }, [navigate, role]);
 
+  
+
+  const handleProfileMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const toggleChatDrawer = () => {
+    setChatOpen(!chatOpen);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8081/api/notifications?role=${role}&page=dashboard`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            handleLogout();
+          } else if (response.status === 403) {
+            throw new Error("Access denied: You do not have permission.");
+          } else {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+        }
+
+        const data = await response.json();
+        setNotifications(data);
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+        setError(err.message);
+      }
+    };
+
+    fetchNotifications();
+  }, [navigate, role]);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -104,6 +164,72 @@ export default function NavBar() {
 
   const toggleChatDrawer = () => {
     setChatOpen(!chatOpen);
+  };
+
+  
+
+  return (
+    <>
+      <CssBaseline />
+      <Box sx={{ display: "flex", height: "100vh" }}>
+        <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+          <AppBar
+            position="fixed"
+            sx={{
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+              backgroundColor: "#fff",
+              color: "#000",
+              boxShadow: 1,
+              width: `calc(100% - 320px)`,
+              left: "320px",
+            }}
+          >
+            <Toolbar sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <IconButton>
+                  <Badge badgeContent={notifications.length} color="error">
+                    <NotificationsIcon />
+                  </Badge>
+                </IconButton>
+
+                {/* Inbox Icon */}
+                <IconButton color="inherit" onClick={toggleChatDrawer}>
+                  <Badge badgeContent={unreadCount} color="error">
+                    <MailIcon />
+                  </Badge>
+                </IconButton>
+                <Typography fontWeight="bold">Suranjan Nayanjith</Typography>
+                <AccountCircle />
+
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleLogout}
+                  sx={{ ml: 2 }}
+                >
+                  Logout
+                </Button>
+              </Box>
+            </Toolbar>
+          </AppBar>
+
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              paddingTop: "80px",
+              paddingX: 2,
+              overflowY: "auto",
+              backgroundColor: "#f5f5f5",
+              minHeight: "100vh",
+            }}
+          ></Box>
+        </Box>
+      </Box>
+    </>
+  );
+}
+    navigate("/login");
   };
 
   return (
@@ -262,4 +388,3 @@ export default function NavBar() {
       </Box>
     </>
   );
-}
