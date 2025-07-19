@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/LoginPage.css";
+import { jwtDecode } from "jwt-decode";
 
 
 import logoPath from "../../../assets/logo.png"; // Correct the path for the image
@@ -9,7 +10,7 @@ import backgroundPath from "../../../assets/background.png"; // Correct the path
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState(""); 
+  const [role, setRole] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -21,7 +22,7 @@ const LoginPage = ({ onLogin }) => {
       const response = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role }), 
+        body: JSON.stringify({ username, password, role }),
       });
 
       if (!response.ok) {
@@ -31,8 +32,15 @@ const LoginPage = ({ onLogin }) => {
 
       const data = await response.json();
       // Store token and role in localStorage
-      localStorage.setItem("token", data.token); 
-      localStorage.setItem("role", data.role); 
+      console.log("Login Response:", data);
+
+      const decodedToken = jwtDecode(data.token);
+      console.log("Decoded Token:", decodedToken);
+      const sub = decodedToken.sub
+      localStorage.setItem("username", sub);
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
 
       // Call the onLogin function passed as a prop
       onLogin({ token: data.token, role: data.role });
@@ -47,7 +55,7 @@ const LoginPage = ({ onLogin }) => {
       className="login-container"
       style={{
         backgroundImage: `url(${backgroundPath})`,
-        backgroundSize: "cover",
+         backgroundSize: "cover",
         height: "100vh",
       }}
     >
@@ -55,7 +63,7 @@ const LoginPage = ({ onLogin }) => {
       <h2 className="login-heading">RMA Web Application</h2>
       <div className="login-box">
         <h3 className="login-title">LOG IN</h3>
-        {error && <p className="error-message">{error}</p>} 
+        {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit}>
           <input
             type="text"
