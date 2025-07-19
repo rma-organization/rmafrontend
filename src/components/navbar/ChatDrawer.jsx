@@ -1,15 +1,20 @@
+
+
+
+
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Drawer, Input, Button, List, Avatar, Modal, Form, message as antMessage, Alert, Badge } from "antd";
 import { SendOutlined, PlusOutlined, ArrowLeftOutlined, UserAddOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { connect, sendMessage, disconnect } from "./StompClient";
 
-const ChatDrawer = ({ open, onClose }) => {
+const ChatDrawer = ({ open, onClose, onUnreadCountUpdate }) => {
   // State management
   const [messages, setMessages] = useState([]);
   const [to, setTo] = useState("");
   const [message, setMessage] = useState("");
   const currentUser = localStorage.getItem("username") || "currentUser";
+  const currentRole = localStorage.getItem("role") || "USER";
 
   // User-specific state initialization
   const [users, setUsers] = useState(() => {
@@ -18,17 +23,14 @@ const ChatDrawer = ({ open, onClose }) => {
   });
   const [activeUser, setActiveUser] = useState(null);
   const [isNewChat, setIsNewChat] = useState(false);
-
   const [chatHistory, setChatHistory] = useState(() => {
     const saved = localStorage.getItem(`chatHistory_${currentUser}`);
     return saved ? JSON.parse(saved) : {};
   });
-
   const [unreadCounts, setUnreadCounts] = useState(() => {
     const saved = localStorage.getItem(`unreadCounts_${currentUser}`);
     return saved ? JSON.parse(saved) : {};
   });
-
   const [isAddUserModalVisible, setIsAddUserModalVisible] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -38,6 +40,18 @@ const ChatDrawer = ({ open, onClose }) => {
   // Refs
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
+
+  // Calculate total unread count
+  const calculateTotalUnread = useCallback(() => {
+    return Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+  }, [unreadCounts]);
+
+  // Update parent component with unread count
+  useEffect(() => {
+    if (onUnreadCountUpdate) {
+      onUnreadCountUpdate(calculateTotalUnread());
+    }
+  }, [unreadCounts, calculateTotalUnread, onUnreadCountUpdate]);
 
   // Persist state to localStorage with user-specific keys
   useEffect(() => {
