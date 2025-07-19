@@ -43,8 +43,8 @@ const RequestPage = () => {
       setLoading(true); // Start loading state
 
       try {
-        const vendorRes = await fetch("http://localhost:8081/api/vendors");
-        const customerRes = await fetch("http://localhost:8081/api/customers");
+        const vendorRes = await fetch("http://localhost:8080/api/vendors");
+        const customerRes = await fetch("http://localhost:8080/api/customers");
 
         if (vendorRes.ok && customerRes.ok) {
           const vendorData = await vendorRes.json();
@@ -65,7 +65,7 @@ const RequestPage = () => {
         }
 
         if (id) {
-          const requestRes = await fetch(`http://localhost:8081/api/requests/${id}`);
+          const requestRes = await fetch(`http://localhost:8080/api/requests/${id}`);
           if (requestRes.ok) {
             const requestData = await requestRes.json();
             setFormData(requestData);

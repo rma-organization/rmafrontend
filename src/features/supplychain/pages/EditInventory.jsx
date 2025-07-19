@@ -15,7 +15,7 @@ import axios from "axios";
 const EditInventory = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
+  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
   const [formData, setFormData] = useState(null);
   const [vendors, setVendors] = useState([]);

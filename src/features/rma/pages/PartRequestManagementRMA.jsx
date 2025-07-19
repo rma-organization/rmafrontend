@@ -56,7 +56,7 @@ const PartRequestManagementRMA = () => {
   const handleSave = async (rowId) => {
     try {
       const updatedStatus = tempStatus[rowId];
-      const response = await fetch(`http://localhost:8081/api/requests/${rowId}`, {
+      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: updatedStatus }),

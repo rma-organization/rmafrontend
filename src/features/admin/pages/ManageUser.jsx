@@ -37,7 +37,7 @@ const ManageUser = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:8081/api/auth/users", {
+        const response = await fetch("http://localhost:8080/api/auth/users", {
           headers: {
             "Authorization": bearerToken, // Add Bearer token for authentication
           },

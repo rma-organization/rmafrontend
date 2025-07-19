@@ -56,7 +56,7 @@ export default function NavBar() {
     const fetchNotifications = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8081/api/notifications?role=${storedRole || role}&page=dashboard`,
+          `http://localhost:8080/api/notifications?role=${storedRole || role}&page=dashboard`,
           {
             method: "GET",
             headers: {

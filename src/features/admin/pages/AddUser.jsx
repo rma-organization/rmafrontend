@@ -42,7 +42,7 @@ const AddUser = () => {
 
   const fetchPendingUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8081/api/auth/pending-users", {
+      const response = await fetch("http://localhost:8080/api/auth/pending-users", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -73,7 +73,7 @@ const AddUser = () => {
 
   const handleApproveUser = async () => {
     try {
-      const response = await fetch("http://localhost:8081/api/auth/approve", {
+      const response = await fetch("http://localhost:8080/api/auth/approve", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
