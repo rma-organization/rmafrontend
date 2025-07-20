@@ -68,7 +68,10 @@ export default function Sidebar() {
     setUserRole(storedRole);
   }, []);
 
-  const isAuthorized = (path) => roleAccess[userRole]?.includes(path);
+  const isAuthorized = (path) => {
+    if (userRole === 'ADMIN') return true;
+    return roleAccess[userRole]?.includes(path);
+  };
 
   return (
     <ThemeProvider theme={theme}>
