@@ -20,7 +20,7 @@ import {
 import WavingHandIcon from "@mui/icons-material/WavingHand";
 import SearchIcon from "@mui/icons-material/Search";
 import axiosInstance from "../../../services/api/axios";
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";  // <-- fixed import here
 
 const COLORS = ["#4CAF50", "#F44336", "#FFC107", "#2196F3"];
 
