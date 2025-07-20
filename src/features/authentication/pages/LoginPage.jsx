@@ -7,36 +7,30 @@ import { jwtDecode } from "jwt-decode";
 import logoPath from "../../../assets/logo.png";
 import backgroundPath from "../../../assets/background.png";
 
-// Main LoginPage component
 const LoginPage = ({ onLogin }) => {
-  // State variables for form inputs and error messages
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [error, setError] = useState("");
 
-  const navigate = useNavigate(); // Hook for navigating between pages
+  const navigate = useNavigate();
 
-  // Function to handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
-    setError(""); // Clear any previous error
+    e.preventDefault();
+    setError("");
 
     try {
-      // Send login request to backend API
       const response = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, role }),
       });
 
-      // Handle failed login
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Invalid credentials.");
       }
 
-      // Handle successful login
       const data = await response.json();
 
       // Decode JWT to extract username if available
@@ -52,7 +46,7 @@ const LoginPage = ({ onLogin }) => {
       onLogin({ token: data.token, role: data.role });
     } catch (error) {
       console.error("Login Error:", error);
-      setError(error.message); // Show error message to user
+      setError(error.message);
     }
   };
 
@@ -65,18 +59,16 @@ const LoginPage = ({ onLogin }) => {
         height: "100vh",
       }}
     >
-      {/* Logo and app name */}
+      {/* Logo */}
       <img src={logoPath} alt="Millennium IT" className="logo" />
       <h2 className="login-heading">RMA Web Application</h2>
 
-      {/* Login form box */}
       <div className="login-box">
         <h3 className="login-title">LOG IN</h3>
 
         {error && <p className="error-message">{error}</p>}
 
         <form onSubmit={handleSubmit}>
-          {/* Username input */}
           <input
             type="text"
             name="username"
@@ -87,7 +79,6 @@ const LoginPage = ({ onLogin }) => {
             required
           />
 
-          {/* Role dropdown */}
           <select
             name="role"
             value={role}
@@ -102,7 +93,6 @@ const LoginPage = ({ onLogin }) => {
             <option value="ENGINEER">ENGINEER</option>
           </select>
 
-          {/* Password input */}
           <input
             type="password"
             name="password"
@@ -113,7 +103,6 @@ const LoginPage = ({ onLogin }) => {
             required
           />
 
-          {/* Forgot password link */}
           <div className="forgot-password">
             <span
               className="forgot-password-link"
@@ -123,13 +112,11 @@ const LoginPage = ({ onLogin }) => {
             </span>
           </div>
 
-          {/* Submit button */}
           <button type="submit" className="login-button">
             LOG IN
           </button>
         </form>
 
-        {/* Link to sign up page */}
         <p className="signup-text">
           Don't have an account?{" "}
           <span className="signup-link" onClick={() => navigate("/signup")}>
