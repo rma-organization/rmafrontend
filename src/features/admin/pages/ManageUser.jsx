@@ -30,7 +30,7 @@ const ManageUser = () => {
   const itemsPerPage = 10;
   const navigate = useNavigate();
 
-  // Fetch all users
+  // Fetch all users on component mount
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -38,32 +38,36 @@ const ManageUser = () => {
         const data = await response.json();
         setUsers(data);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching users:", error.message);
+        setUsers([]);
       }
     };
+
     fetchUsers();
   }, []);
 
-  // Handle pagination
+  // Handle pagination change
   const handlePageChange = (_event, newPage) => {
     setPage(newPage);
   };
 
-  // Get current page data
+  // Data slice for current page
   const paginatedData = users.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
-  // Customize table structure for virtualization
+  // Virtualized table components
   const VirtuosoTableComponents = {
     Scroller: React.forwardRef((props, ref) => (
       <TableContainer component={Paper} {...props} ref={ref} />
     )),
-    Table: (props) => <Table {...props} sx={{ borderCollapse: "separate", tableLayout: "fixed" }} />,
+    Table: (props) => (
+      <Table {...props} sx={{ borderCollapse: "separate", tableLayout: "fixed" }} />
+    ),
     TableHead: React.forwardRef((props, ref) => <TableHead {...props} ref={ref} />),
     TableRow,
     TableBody: React.forwardRef((props, ref) => <TableBody {...props} ref={ref} />),
   };
 
-  // Header row
+  // Fixed header for table
   const fixedHeaderContent = () => (
     <TableRow>
       {columns.map((column) => (
@@ -80,13 +84,13 @@ const ManageUser = () => {
     </TableRow>
   );
 
-  // Row data rendering
+  // Render each row's content
   const rowContent = (_index, row) => (
     <>
       {columns.map((column) => (
-        <TableCell key={column.dataKey} align="left">
+        <TableCell key={column.dataKey} align="left" style={{ wordBreak: "break-word" }}>
           {column.dataKey === "roles"
-            ? row[column.dataKey]?.join(", ")
+            ? Array.isArray(row[column.dataKey]) ? row[column.dataKey].join(", ") : row[column.dataKey]
             : row[column.dataKey] ?? "N/A"}
         </TableCell>
       ))}
@@ -95,29 +99,35 @@ const ManageUser = () => {
 
   return (
     <Box p={2} mt={1}>
-      {/* Navigation button */}
       <Button variant="contained" disableElevation onClick={() => navigate("/")}>
         Home
       </Button>
 
-      {/* User management panel */}
       <Box bgcolor="lightgray" p={1} mt={5} borderRadius={1}>
         <Typography variant="h6" fontWeight="bold" color="black" mt={4}>
           Manage User
         </Typography>
 
-        {/* Virtualized table */}
-        <Paper sx={{ width: '100%', minHeight: '60vh', height: '100%', marginTop: 2, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
-          <Box sx={{ flex: 1, minHeight: '0' }}>
+        <Paper
+          sx={{
+            width: "100%",
+            minHeight: "60vh",
+            height: "100%",
+            marginTop: 2,
+            display: "flex",
+            flexDirection: "column",
+            overflowX: "auto",
+          }}
+        >
+          <Box sx={{ flex: 1, minHeight: 0 }}>
             <TableVirtuoso
               data={paginatedData}
               components={VirtuosoTableComponents}
               fixedHeaderContent={fixedHeaderContent}
               itemContent={rowContent}
-              style={{ height: '100%', minHeight: '50vh' }}
+              style={{ height: "100%", minHeight: "50vh" }}
             />
           </Box>
-          {/* Pagination controls */}
           <Box display="flex" justifyContent="flex-end" mt={2} p={2}>
             <Pagination
               count={Math.ceil(users.length / itemsPerPage)}
@@ -133,4 +143,3 @@ const ManageUser = () => {
 };
 
 export default ManageUser;
-

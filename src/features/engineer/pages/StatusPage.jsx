@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -16,7 +18,7 @@ import {
   CircularProgress,
   Pagination,
 } from "@mui/material";
-import { listRequests } from "../../../services/api/InventoryServices";
+import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
 import { Link } from "react-router-dom";
 
 const ListRequestsComponent = () => {
@@ -27,7 +29,7 @@ const ListRequestsComponent = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -44,67 +46,15 @@ const ListRequestsComponent = () => {
     fetchRequests();
   }, []);
 
-  const handleEdit = (row) => {
-    setEditRowId(row.id);
-    setTempStatus((prev) => ({ ...prev, [row.id]: row.status || "Requested" }));
+  const validTransitions = {
+    "At Office": ["Collected", "Faulty Returned"],
+    Requested: [],
+    Collected: ["Faulty Returned"],
+    "Faulty Returned": [],
+    Approved: [],
+    Declined: [],
+    Rejected: [],
   };
-
-  const handleSave = async (rowId) => {
-    const updatedStatus = tempStatus[rowId];
-
-    if (!updatedStatus) {
-      setError("Status is required to update.");
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: updatedStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update request.");
-      }
-
-      setRequests((prevRequests) =>
-        prevRequests.map((req) => (req.id === rowId ? { ...req, status: updatedStatus } : req))
-      );
-      setEditRowId(null);
-      setSuccessMessage("Request updated successfully!");
-    } catch (error) {
-      setError("Error updating request.");
-      console.error("Error updating request:", error);
-    }
-  };
-
-  const handleDelete = async (rowId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this request?")) return;
-
-    try {
-      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete request.");
-      }
-
-      setRequests((prevRequests) => prevRequests.filter((req) => req.id !== rowId));
-      setSuccessMessage("Request deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting request:", error);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const handleCloseSnackbar = () => setSuccessMessage(null);
-  const handlePageChange = (event, newPage) => setPage(newPage);
 
   const statusStyles = {
     Approved: { backgroundColor: "#28a745", color: "#fff" },
@@ -118,16 +68,100 @@ const ListRequestsComponent = () => {
     Completed: { backgroundColor: "#c46210", color: "#fff" },
   };
 
-  
-  const validTransitions = {
-    "At Office": ["Collected", "Faulty Returned"],
-    Requested: [],
-    Collected: ["Faulty Returned"], 
-    "Faulty Returned": [],
-    Approved: [],
-    Declined: [],
-    Rejected: [],
+  const handleEdit = (row) => {
+    const options = validTransitions[row.status] || [];
+    setEditRowId(row.id);
+    setTempStatus((prev) => ({
+      ...prev,
+      [row.id]: options.includes(row.status) ? row.status : options[0] || "",
+    }));
   };
+
+  const handleSave = async (rowId) => {
+    const updatedStatus = tempStatus[rowId];
+    if (!updatedStatus) {
+      setError("Status is required to update.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: updatedStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update request.");
+      }
+
+      setRequests((prevRequests) =>
+        prevRequests.map((req) =>
+          req.id === rowId ? { ...req, status: updatedStatus } : req
+        )
+      );
+      setEditRowId(null);
+      setSuccessMessage("Request updated successfully!");
+
+      // 🔔 Send Notification
+      await sendNotification({
+        receiverRole: "rma",
+        message: `Request #${rowId} status changed to "${updatedStatus}".`,
+        type: "REQUEST",
+        status: updatedStatus,
+      });
+
+    } catch (error) {
+      setError("Error updating request.");
+      console.error("Error updating request:", error);
+    }
+  };
+
+  const handleDelete = async (rowId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this request?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete request.");
+      }
+
+      setRequests((prevRequests) => prevRequests.filter((req) => req.id !== rowId));
+      setSuccessMessage("Request deleted successfully!");
+
+      // 🔔 Send Notification
+      await sendNotification({
+        receiverRole: "manager",
+        message: `Request #${rowId} was deleted.`,
+        type: "REQUEST",
+        status: "Deleted",
+      });
+
+    } catch (error) {
+      console.error("Error deleting request:", error);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const handleCloseSnackbar = () => setSuccessMessage(null);
+  const handlePageChange = (event, newPage) => setPage(newPage);
 
   return (
     <>
@@ -196,17 +230,16 @@ const ListRequestsComponent = () => {
                             {editRowId === row.id ? (
                               <Select
                                 value={tempStatus[row.id] || ""}
-                                onChange={(e) => {
-                                  const newStatus = e.target.value;
+                                onChange={(e) =>
                                   setTempStatus((prev) => ({
                                     ...prev,
-                                    [row.id]: newStatus,
-                                  }));
-                                }}
+                                    [row.id]: e.target.value,
+                                  }))
+                                }
                                 fullWidth
                                 size="small"
                               >
-                                {validTransitions[row.status]?.map((status) => (
+                                {(validTransitions[row.status] || []).map((status) => (
                                   <MenuItem key={status} value={status}>
                                     {status}
                                   </MenuItem>
@@ -215,7 +248,7 @@ const ListRequestsComponent = () => {
                             ) : (
                               <Box
                                 sx={{
-                                  ...statusStyles[row.status] || {},
+                                  ...statusStyles[row.status],
                                   padding: "5px 10px",
                                   borderRadius: "5px",
                                   textAlign: "center",
@@ -240,6 +273,7 @@ const ListRequestsComponent = () => {
                                   variant="contained"
                                   color="warning"
                                   onClick={() => handleEdit(row)}
+                                  disabled={!validTransitions[row.status]?.length}
                                 >
                                   Edit
                                 </Button>

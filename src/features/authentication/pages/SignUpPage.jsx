@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaEnvelope, FaLock, FaUsers, FaCheck, FaEye, FaEyeSlash } from "react-icons/fa";
-import "../styles/SignUpPage.css"; 
+import "../styles/SignUpPage.css";
 
-import logoPath from "../../../assets/logo.png"; // Ensure correct path
-import backgroundPath from "../../../assets/background.png"; // Ensure correct path
+import logoPath from "../../../assets/logo.png";
+import backgroundPath from "../../../assets/background.png";
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +14,7 @@ const SignUpPage = () => {
     role: [],
   });
   const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false); // Password visibility
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const ROLES = ["RMA", "ENGINEER", "SUPPLYCHAIN", "ADMIN"];
@@ -27,19 +27,13 @@ const SignUpPage = () => {
       if (checked) {
         updatedRoles.push(value);
       } else {
-        updatedRoles = updatedRoles.filter(role => role !== value);
+        updatedRoles = updatedRoles.filter((role) => role !== value);
       }
-      setFormData(prev => ({ ...prev, role: updatedRoles }));
-      setErrors(prev => ({ ...prev, role: "" })); // Clear role error
+      setFormData((prev) => ({ ...prev, role: updatedRoles }));
+      setErrors((prev) => ({ ...prev, role: "" }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-      }));
-      setErrors(prev => ({
-        ...prev,
-        [name]: "",
-      }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -49,13 +43,9 @@ const SignUpPage = () => {
     if (!formData.email.trim()) tempErrors.email = "Email is required!";
     if (!formData.password) {
       tempErrors.password = "Password is required!";
-    } else {
-      const minLength = /.{8,}/;
-      if (!minLength.test(formData.password)) {
-        tempErrors.password = "Password must be at least 8 characters.";
-      }
+    } else if (formData.password.length < 8) {
+      tempErrors.password = "Password must be at least 8 characters.";
     }
-    
     if (formData.role.length === 0) tempErrors.role = "Please select at least one role!";
 
     setErrors(tempErrors);
@@ -67,8 +57,9 @@ const SignUpPage = () => {
     if (!validateForm()) return;
 
     const apiURL = "http://localhost:8080/api/auth/register";
-    
+
     try {
+      // Optional pre-flight check
       const testResponse = await fetch(apiURL, { method: "OPTIONS" });
       if (!testResponse.ok) {
         throw new Error(`Server not reachable. Status: ${testResponse.status}`);
@@ -81,7 +72,7 @@ const SignUpPage = () => {
           username: formData.username,
           email: formData.email,
           password: formData.password,
-          roles: formData.role, 
+          roles: formData.role,
         }),
       });
 
@@ -90,7 +81,6 @@ const SignUpPage = () => {
         navigate("/login");
       } else {
         const errorData = await response.json();
-        console.error("Signup failed:", errorData);
         alert(`Error: ${errorData.message || "Signup failed. Please try again."}`);
       }
     } catch (error) {
@@ -118,7 +108,6 @@ const SignUpPage = () => {
 
         <h3 className="signup-title">SIGN UP</h3>
         <form onSubmit={handleSubmit}>
-          {/* Username Field */}
           <div className="input-group">
             <FaUser className="icon" />
             <input
@@ -132,7 +121,6 @@ const SignUpPage = () => {
             {errors.username && <small className="error-text">{errors.username}</small>}
           </div>
 
-          {/* Email Field */}
           <div className="input-group">
             <FaEnvelope className="icon" />
             <input
@@ -146,7 +134,7 @@ const SignUpPage = () => {
             {errors.email && <small className="error-text">{errors.email}</small>}
           </div>
 
-          {/* Password Field with Eye Toggle */}
+          {/* Password Field with Toggle */}
           <div className="input-group" style={{ position: "relative" }}>
             <FaLock className="icon" />
             <input
@@ -159,14 +147,14 @@ const SignUpPage = () => {
             />
             <span
               className="toggle-password"
-              onClick={() => setShowPassword(prev => !prev)}
+              onClick={() => setShowPassword((prev) => !prev)}
               style={{
                 position: "absolute",
                 right: "10px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 cursor: "pointer",
-                color: "#666"
+                color: "#666",
               }}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -174,11 +162,10 @@ const SignUpPage = () => {
             {errors.password && <small className="error-text">{errors.password}</small>}
           </div>
 
-          {/* Role Selection (Checkboxes) */}
           <div className="input-group role-checkboxes">
             <FaUsers className="icon" />
             <div className="checkbox-group">
-              {ROLES.map(role => (
+              {ROLES.map((role) => (
                 <label key={role} className="checkbox-label">
                   <input
                     type="checkbox"
@@ -198,7 +185,9 @@ const SignUpPage = () => {
             {errors.role && <small className="error-text">{errors.role}</small>}
           </div>
 
-          <button type="submit" className="signup-button">SIGN UP</button>
+          <button type="submit" className="signup-button">
+            SIGN UP
+          </button>
         </form>
       </div>
     </div>

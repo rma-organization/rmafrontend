@@ -8,14 +8,16 @@ import {
   FormControl,
   Select,
   MenuItem,
-} from "@mui/material";
+  Snackbar,
+  Alert,
+} from "@mui/material";  // Added Snackbar and Alert
+
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const AddNewInventory = () => {
   const navigate = useNavigate();
 
-  // Initial form state with consistent keys (matching backend)
   const [formData, setFormData] = useState({
     name: "",
     boxPartNumber: "",
@@ -33,11 +35,12 @@ const AddNewInventory = () => {
     vendorId: "",
     amount: "",
     currency: "",
-    airwaybillnumber: "", // ✅ fixed key
+    airwaybillnumber: "",
   });
 
   const [error, setError] = useState(null);
   const [vendors, setVendors] = useState([]);
+  const [notificationOpen, setNotificationOpen] = useState(false); // <-- Notification state
   const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
   useEffect(() => {
@@ -83,6 +86,8 @@ const AddNewInventory = () => {
       });
 
       console.log("Part added:", response.data);
+
+      // Clear form
       setFormData({
         name: "",
         boxPartNumber: "",
@@ -100,14 +105,27 @@ const AddNewInventory = () => {
         vendorId: "",
         amount: "",
         currency: "",
-        airwaybillnumber: "", // ✅ reset correctly
+        airwaybillnumber: "",
       });
 
+      // Show notification
+      setNotificationOpen(true);
+
+      // Optional: navigate after delay if you want
+      // setTimeout(() => navigate("/SuccessfullyAddInventory"), 3000);
+      // Or just keep as is, navigate immediately:
       navigate("/SuccessfullyAddInventory");
+
     } catch (error) {
       console.error("Error adding part:", error.response ? error.response.data : error);
       setError(error.response?.data?.message || "Failed to add inventory. Please try again.");
     }
+  };
+
+  // Handle notification close
+  const handleNotificationClose = (event, reason) => {
+    if (reason === "clickaway") return;
+    setNotificationOpen(false);
   };
 
   return (
@@ -123,6 +141,7 @@ const AddNewInventory = () => {
 
         <Paper sx={{ padding: 3, mt: 2 }}>
           <form onSubmit={handleSubmit}>
+            {/* Your existing form layout (no changes) */}
             <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
               {/* Left Column */}
               <Box flex={1}>
@@ -157,7 +176,7 @@ const AddNewInventory = () => {
                 {[
                   { label: "PO Number", name: "poNumber" },
                   { label: "LOT Number", name: "lotNumber" },
-                  { label: "Airway Bill Number", name: "airwaybillnumber" }, // ✅ updated
+                  { label: "Airway Bill Number", name: "airwaybillnumber" },
                   { label: "Currency", name: "currency" },
                   { label: "Amount", name: "amount" },
                   { label: "Description", name: "description" },
@@ -249,6 +268,18 @@ const AddNewInventory = () => {
           </form>
         </Paper>
       </Box>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notificationOpen}
+        autoHideDuration={3000}
+        onClose={handleNotificationClose}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert onClose={handleNotificationClose} severity="success" sx={{ width: "100%" }}>
+          Part added successfully!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

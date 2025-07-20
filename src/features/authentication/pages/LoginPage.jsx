@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import jwtDecode from "jwt-decode";
 import "../styles/LoginPage.css";
-import { jwtDecode } from "jwt-decode";
 
 // Import logo and background image
 import logoPath from "../../../assets/logo.png";
@@ -33,16 +33,16 @@ const LoginPage = ({ onLogin }) => {
 
       const data = await response.json();
 
-      // Decode JWT to extract username if available
+      // Decode JWT token to get username (subject)
       const decodedToken = jwtDecode(data.token);
       const decodedUsername = decodedToken.sub || username;
 
-      // Store auth data in localStorage
+      // Save JWT token, role, and username in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
       localStorage.setItem("username", decodedUsername);
 
-      // Trigger login callback to parent
+      // Notify parent component about successful login
       onLogin({ token: data.token, role: data.role });
     } catch (error) {
       console.error("Login Error:", error);
@@ -71,7 +71,6 @@ const LoginPage = ({ onLogin }) => {
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            name="username"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -80,7 +79,6 @@ const LoginPage = ({ onLogin }) => {
           />
 
           <select
-            name="role"
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="input-field"
@@ -95,7 +93,6 @@ const LoginPage = ({ onLogin }) => {
 
           <input
             type="password"
-            name="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -107,6 +104,7 @@ const LoginPage = ({ onLogin }) => {
             <span
               className="forgot-password-link"
               onClick={() => navigate("/forgot-password")}
+              style={{ cursor: "pointer" }}
             >
               Forgot Password?
             </span>
@@ -119,7 +117,11 @@ const LoginPage = ({ onLogin }) => {
 
         <p className="signup-text">
           Don't have an account?{" "}
-          <span className="signup-link" onClick={() => navigate("/signup")}>
+          <span
+            className="signup-link"
+            onClick={() => navigate("/signup")}
+            style={{ cursor: "pointer" }}
+          >
             Sign Up
           </span>
         </p>

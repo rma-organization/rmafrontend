@@ -2,11 +2,19 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-export default function HomePage() {
+export default function EngineerHomePage() {
   const [chartData, setChartData] = useState({
     labels: ["First Week", "Second Week", "Third Week", "Fourth Week"],
     datasets: [
@@ -19,28 +27,53 @@ export default function HomePage() {
 
   const [duration, setDuration] = useState("");
 
-  // Fetch data from the API and process it
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/requests");
-        const data = await response.json();
+        const token = localStorage.getItem("token"); // Get token from localStorage
+
+        const response = await fetch("http://localhost:8080/api/requests", {
+          headers: {
+            Authorization: `Bearer ${token}`,  // Include Authorization header
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error ${response.status}: ${errorText}`);
+        }
+
+        const rawText = await response.text();
+
+        if (!rawText || rawText.trim() === "") {
+          throw new Error("Empty response body");
+        }
+
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (parseError) {
+          console.error("Response was not valid JSON:", rawText);
+          throw new Error("Invalid JSON response");
+        }
+
+        if (!Array.isArray(data)) {
+          throw new Error("Expected an array of requests");
+        }
 
         if (data.length === 0) return;
 
-        // Find the earliest createdAt date
-        const earliestDate = new Date(Math.min(...data.map((request) => new Date(request.createdAt).getTime())));
+        const earliestDate = new Date(
+          Math.min(...data.map((request) => new Date(request.createdAt).getTime()))
+        );
         const startDate = new Date(earliestDate);
-        startDate.setHours(0, 0, 0, 0); // Normalize to start of the day
+        startDate.setHours(0, 0, 0, 0);
 
-        // Calculate the end date of the fourth week
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 28); // 4 weeks later
+        endDate.setDate(endDate.getDate() + 27);
 
-        // Set the duration string
-        setDuration('${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}');
+        setDuration(`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`);
 
-        // Group data into 4 weeks
         const weeklyCounts = {
           Approved: [0, 0, 0, 0],
           Declined: [0, 0, 0, 0],
@@ -50,7 +83,7 @@ export default function HomePage() {
 
         data.forEach((request) => {
           const requestDate = new Date(request.createdAt);
-          const weekIndex = Math.floor((requestDate - startDate) / (7 * 24 * 60 * 60 * 1000)); // Calculate week index (0-3)
+          const weekIndex = Math.floor((requestDate - startDate) / (7 * 24 * 60 * 60 * 1000));
           if (weekIndex >= 0 && weekIndex < 4) {
             switch (request.status) {
               case "Approved":
@@ -71,36 +104,48 @@ export default function HomePage() {
           }
         });
 
-        // Update the chart data
         setChartData({
           labels: ["First Week", "Second Week", "Third Week", "Fourth Week"],
           datasets: [
-            { label: "Approved Requests", backgroundColor: "green", data: weeklyCounts.Approved },
-            { label: "Declined Requests", backgroundColor: "red", data: weeklyCounts.Declined },
-            { label: "Pending Requests", backgroundColor: "orange", data: weeklyCounts.Pending },
-            { label: "Faulty Returned", backgroundColor: "goldenrod", data: weeklyCounts["Faulty Returned"] },
+            {
+              label: "Approved Requests",
+              backgroundColor: "green",
+              data: weeklyCounts.Approved,
+            },
+            {
+              label: "Declined Requests",
+              backgroundColor: "red",
+              data: weeklyCounts.Declined,
+            },
+            {
+              label: "Pending Requests",
+              backgroundColor: "orange",
+              data: weeklyCounts.Pending,
+            },
+            {
+              label: "Faulty Returned",
+              backgroundColor: "goldenrod",
+              data: weeklyCounts["Faulty Returned"],
+            },
           ],
         });
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching or processing data:", error.message);
       }
     };
 
     fetchData();
+    const interval = setInterval(fetchData, 7 * 24 * 60 * 60 * 1000); // refresh weekly
 
-    // Set up a weekly interval to auto-update the chart
-    const interval = setInterval(fetchData, 7 * 24 * 60 * 60 * 1000); // 7 days in milliseconds
-    return () => clearInterval(interval); // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <Box sx={{ backgroundColor: "#E0E0E0", minHeight: "100vh", py: 3, px: 5 }}>
-      {/* Header */}
       <Typography variant="h5" fontWeight="bold" mb={2}>
         Welcome Suranjan Nayanjith 👋
       </Typography>
 
-      {/* Search Bar */}
       <TextField
         variant="outlined"
         placeholder="Search..."
@@ -115,13 +160,10 @@ export default function HomePage() {
         sx={{ backgroundColor: "white", borderRadius: 2, mb: 2 }}
       />
 
-      {/* Spacer to create gap between Search Bar & Chart */}
       <Box sx={{ mt: 10 }} />
 
-      {/* Chart & Legend Container */}
       <Box display="flex" alignItems="center">
-        {/* Chart Box */}
-        <Box flex={3} sx={{ width: '90%', height: '350px' }}>
+        <Box flex={3} sx={{ width: "90%", height: "350px" }}>
           <Bar
             data={chartData}
             options={{
@@ -129,17 +171,14 @@ export default function HomePage() {
               scales: {
                 y: {
                   beginAtZero: true,
-                  max: 5, // Set a fixed maximum value for the y-axis
-                  ticks: {
-                    stepSize: 1, // Ensure the y-axis increments by 1
-                  },
+                  max: 5,
+                  ticks: { stepSize: 1 },
                 },
               },
             }}
           />
         </Box>
 
-        {/* Legend Box */}
         <Box flex={1} ml={4}>
           <Typography fontWeight="bold">Duration: {duration}</Typography>
           {["green", "red", "orange", "goldenrod"].map((color, i) => (

@@ -4,4 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    global: 'globalThis', // ✅ Fix for sockjs-client and stompjs
+  },
 })

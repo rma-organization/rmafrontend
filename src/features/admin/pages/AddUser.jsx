@@ -6,7 +6,7 @@ import {
   MenuItem, Select
 } from "@mui/material";
 
-// Mapping roles to readable names (optional if needed for future display)
+// Optional role mapping for display (you can use it if you want)
 const roleMapping = {
   ADMIN: "System Admin",
   ENGINEER: "Engineer",
@@ -27,7 +27,7 @@ const AddUser = () => {
     fetchPendingUsers();
   }, []);
 
-  // Get pending users from the backend
+  // Get pending users from backend
   const fetchPendingUsers = async () => {
     try {
       const response = await fetch("http://localhost:8080/api/auth/pending-users", {
@@ -37,7 +37,7 @@ const AddUser = () => {
       const data = await response.json();
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching data:", error.message);
       setUsers([]);
     }
   };
@@ -67,10 +67,11 @@ const AddUser = () => {
         setUsername("");
         setStatus("PENDING");
       } else {
-        console.error("Failed to approve user");
+        const errorMsg = await response.text();
+        console.error("Failed to approve user:", errorMsg);
       }
     } catch (error) {
-      console.error("Error approving user:", error);
+      console.error("Error approving user:", error.message);
     }
   };
 
@@ -79,7 +80,7 @@ const AddUser = () => {
       <CardContent>
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <Typography variant="h6">Add New User</Typography>
+          <Typography variant="h6">Approve User</Typography>
         </Box>
 
         {/* User input form */}

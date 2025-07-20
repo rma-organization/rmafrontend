@@ -14,11 +14,13 @@ import {
 
 const RequestPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get request ID for editing
+  const { id } = useParams();
+  const token = localStorage.getItem("token");
+  const loggedInUsername = localStorage.getItem("username") || "UnknownUser";
 
   const [formData, setFormData] = useState({
     name: "",
-    status: "Requested", // Default value should match one of the options
+    status: "Requested",
     partId: "",
     vendor: "",
     srNumber: "",
@@ -34,125 +36,139 @@ const RequestPage = () => {
 
   const [vendors, setVendors] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true); // To show loading indicator
-  const [error, setError] = useState(null); // To handle errors
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Fetch vendors, customers, and existing request data if editing
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true); // Start loading state
+    const fetchInitialData = async () => {
+      setLoading(true);
+      setError(null);
 
       try {
-        const vendorRes = await fetch("http://localhost:8080/api/vendors");
-        const customerRes = await fetch("http://localhost:8080/api/customers");
+        const [vendorRes, customerRes] = await Promise.all([
+          fetch("http://localhost:8080/api/vendors"),
+          fetch("http://localhost:8080/api/customers"),
+        ]);
 
-        if (vendorRes.ok && customerRes.ok) {
-          const vendorData = await vendorRes.json();
-          const customerData = await customerRes.json();
+        if (!vendorRes.ok || !customerRes.ok) {
+          throw new Error("Failed to load vendor or customer data.");
+        }
 
-          setVendors(vendorData);
-          setCustomers(customerData);
+        const [vendorData, customerData] = await Promise.all([
+          vendorRes.json(),
+          customerRes.json(),
+        ]);
 
-          if (!id) {
-            setFormData((prev) => ({
-              ...prev,
-              vendor: vendorData.length > 0 ? vendorData[0].id : "",
-              customer: customerData.length > 0 ? customerData[0].id : "",
-            }));
-          }
-        } else {
-          setError("Failed to load vendors or customers.");
+        setVendors(vendorData);
+        setCustomers(customerData);
+
+        if (!id) {
+          setFormData((prev) => ({
+            ...prev,
+            vendor: vendorData[0]?.id || "",
+            customer: customerData[0]?.id || "",
+          }));
         }
 
         if (id) {
-          const requestRes = await fetch(`http://localhost:8080/api/requests/${id}`);
-          if (requestRes.ok) {
-            const requestData = await requestRes.json();
-            setFormData(requestData);
-          } else {
-            setError("Failed to load request details.");
-          }
+          const requestRes = await fetch(`http://localhost:8080/api/requests/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (!requestRes.ok) throw new Error("Failed to load request details.");
+
+          const requestData = await requestRes.json();
+
+          setFormData({
+            ...requestData,
+            vendor: requestData.vendor?.id || "",
+            customer: requestData.customer?.id || "",
+            requestedUserId: requestData.requestedUserId || "",
+          });
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("An error occurred while fetching data.");
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError(err.message);
       } finally {
-        setLoading(false); // End loading state
+        setLoading(false);
       }
     };
 
-    fetchData();
-  }, [id]);
+    fetchInitialData();
+  }, [id, token]);
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const parsedValue = ["vendor", "customer", "requestedUserId"].includes(name)
+      ? Number(value)
+      : value;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: parsedValue,
     }));
   };
 
-  // Validate form data before submitting
   const validateForm = () => {
-    if (!formData.name || !formData.vendor || !formData.customer) {
+    if (!formData.name.trim() || !formData.vendor || !formData.customer) {
       return "Name, Vendor, and Customer are required.";
     }
     return null;
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const errorMessage = validateForm();
-    if (errorMessage) {
-      setError(errorMessage);
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
+    setSubmitting(true);
+    setError(null);
+
     const requestBody = {
       ...formData,
-      vendor: {
-        id: formData.vendor ? parseInt(formData.vendor, 10) : null,
-      },
-      customer: {
-        id: formData.customer ? parseInt(formData.customer, 10) : null,
-      },
-      requestedUserId: formData.requestedUserId
-        ? parseInt(formData.requestedUserId, 10)
-        : null,
+      vendor: { id: Number(formData.vendor) },
+      customer: { id: Number(formData.customer) },
+      requestedUserId: formData.requestedUserId ? Number(formData.requestedUserId) : null,
       updatedAt: new Date().toISOString(),
     };
 
-    if (!id) {
-      requestBody.createdAt = new Date().toISOString();
-    }
+    if (!id) requestBody.createdAt = new Date().toISOString();
+
+    const url = id
+      ? `http://localhost:8080/api/requests/${id}`
+      : "http://localhost:8080/api/requests";
 
     try {
-      const url = id
-        ? `http://localhost:8081/api/requests/${id}`
-        : "http://localhost:8081/api/requests";
-      const method = id ? "PUT" : "POST";
-
-      const response = await fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(url, {
+        method: id ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(requestBody),
       });
 
-      if (response.ok) {
+      if (res.ok) {
         alert("Request submitted successfully!");
         navigate(-1);
       } else {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);  // Log the full response
-        console.error("Errors:", errorData.errors);  // Log the specific errors from the server
-        alert("Failed to submit request");
+        const text = await res.text();
+        try {
+          const errData = JSON.parse(text);
+          setError(errData.message || "Failed to submit request.");
+        } catch {
+          setError(text || "Failed to submit request.");
+        }
       }
-    } catch (error) {
-      console.error("Error submitting request:", error);
-      alert("An error occurred. Please try again.");
+    } catch (err) {
+      console.error("Submit error:", err);
+      setError("An unexpected error occurred.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -187,8 +203,7 @@ const RequestPage = () => {
           size="small"
           sx={{
             bgcolor: "#2715E6",
-            color: "#FFFFFF",
-            fontWeight: 500,
+            color: "#fff",
             textTransform: "none",
             "&:hover": { bgcolor: "#1F10C8" },
           }}
@@ -198,15 +213,17 @@ const RequestPage = () => {
       </Box>
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
         </Box>
-      ) : error ? (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
       ) : (
         <form onSubmit={handleSubmit}>
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
+
           <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
             <Box sx={{ flex: 1 }}>
               <TextField
@@ -216,10 +233,31 @@ const RequestPage = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
                 required
+                sx={{ mb: 1.5 }}
               />
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                sx={{ mb: 1.5 }}
+              >
+                {[
+                  "Requested",
+                  "Approved",
+                  "Rejected",
+                  "In Progress",
+                  "Completed",
+                ].map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
                 fullWidth
                 select
@@ -228,13 +266,12 @@ const RequestPage = () => {
                 name="vendor"
                 value={formData.vendor}
                 onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
                 required
+                sx={{ mb: 1.5 }}
               >
-                {vendors.map((vendor) => (
-                  <MenuItem key={vendor.id} value={vendor.id}>
-                    {vendor.name}
+                {vendors.map((v) => (
+                  <MenuItem key={v.id} value={v.id}>
+                    {v.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -246,13 +283,12 @@ const RequestPage = () => {
                 name="customer"
                 value={formData.customer}
                 onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
                 required
+                sx={{ mb: 1.5 }}
               >
-                {customers.map((customer) => (
-                  <MenuItem key={customer.id} value={customer.id}>
-                    {customer.name}
+                {customers.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -263,7 +299,6 @@ const RequestPage = () => {
                 name="srNumber"
                 value={formData.srNumber}
                 onChange={handleChange}
-                variant="outlined"
                 sx={{ mb: 1.5 }}
               />
               <TextField
@@ -273,7 +308,6 @@ const RequestPage = () => {
                 name="fieldServiceTaskNumber"
                 value={formData.fieldServiceTaskNumber}
                 onChange={handleChange}
-                variant="outlined"
                 sx={{ mb: 1.5 }}
               />
               <TextField
@@ -283,7 +317,6 @@ const RequestPage = () => {
                 name="faultPartNumber"
                 value={formData.faultPartNumber}
                 onChange={handleChange}
-                variant="outlined"
                 sx={{ mb: 1.5 }}
               />
               <TextField
@@ -293,7 +326,6 @@ const RequestPage = () => {
                 name="mailIds"
                 value={formData.mailIds}
                 onChange={handleChange}
-                variant="outlined"
                 sx={{ mb: 1.5 }}
               />
               <TextField
@@ -302,9 +334,8 @@ const RequestPage = () => {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                variant="outlined"
                 multiline
-                rows={2}
+                rows={3}
                 sx={{ mb: 1.5 }}
               />
             </Box>
@@ -319,14 +350,18 @@ const RequestPage = () => {
                 name="partId"
                 value={formData.partId}
                 onChange={handleChange}
-                variant="outlined"
                 sx={{ mb: 1.5 }}
               />
             </Box>
           </Box>
 
-          <Button type="submit" variant="contained" sx={{ mt: 2, width: "100%" }}>
-            {id ? "Update Request" : "Request Part"}
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{ mt: 2, width: "100%" }}
+            disabled={submitting}
+          >
+            {submitting ? (id ? "Updating..." : "Submitting...") : id ? "Update Request" : "Request Part"}
           </Button>
         </form>
       )}

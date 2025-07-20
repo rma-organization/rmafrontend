@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -11,6 +11,7 @@ import {
   Menu,
   MenuItem,
   Avatar,
+  Button,
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon,
@@ -38,10 +39,7 @@ export default function NavBar() {
     const storedUsername = localStorage.getItem("username");
     const storedRole = localStorage.getItem("role");
 
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+    if (!token || !storedRole) return;
 
     setUsername(storedUsername || "");
     setRole(storedRole || "USER");
@@ -69,13 +67,19 @@ export default function NavBar() {
 
         const data = await response.json();
         setNotifications(data);
-      } catch (err) {
-        console.error("Error fetching notifications:", err);
-        setError(err.message);
+        const unread = data.filter((n) => !n.read).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+        setError("Failed to load notifications");
       }
     };
 
     fetchNotifications();
+
+    // Optionally, poll notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
   }, [navigate]);
 
   const handleLogout = () => {
@@ -96,8 +100,6 @@ export default function NavBar() {
   const toggleChatDrawer = () => {
     setChatOpen(!chatOpen);
   };
-
-  const unreadNotifications = notifications.filter((n) => !n.read).length;
 
   return (
     <>
@@ -128,11 +130,8 @@ export default function NavBar() {
                 }}
               >
                 {/* Notifications */}
-                <IconButton
-                  color="inherit"
-                  aria-label="notifications"
-                >
-                  <Badge badgeContent={unreadNotifications} color="error">
+                <IconButton color="inherit" aria-label="notifications" onClick={() => navigate("/notifications")}>
+                  <Badge badgeContent={unreadCount} color="error">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
@@ -262,6 +261,7 @@ export default function NavBar() {
                 {error}
               </Typography>
             )}
+            {/* Page content goes here */}
           </Box>
         </Box>
       </Box>

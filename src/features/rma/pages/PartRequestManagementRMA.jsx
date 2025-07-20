@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -16,7 +18,7 @@ import {
   CircularProgress,
   Pagination,
 } from "@mui/material";
-import { listRequests } from "../../../services/api/InventoryServices";
+import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
 import { Link, useNavigate } from "react-router-dom";
 
 const PartRequestManagementRMA = () => {
@@ -49,23 +51,28 @@ const PartRequestManagementRMA = () => {
   const handleEdit = (row) => {
     if (row.status === "Faulty Returned") {
       setEditRowId(row.id);
-      setTempStatus((prev) => ({ ...prev, [row.id]: row.status }));
+      setTempStatus((prev) => ({ ...prev, [row.id]: "Completed" }));
     }
   };
 
   const handleSave = async (rowId) => {
     try {
       const updatedStatus = tempStatus[rowId];
+      const token = localStorage.getItem("token");
+
+      // Update request status
       const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ status: updatedStatus }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update request.");
-      }
+      if (!response.ok) throw new Error("Failed to update request.");
 
+      // Update state
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
           req.id === rowId ? { ...req, status: updatedStatus } : req
@@ -73,6 +80,14 @@ const PartRequestManagementRMA = () => {
       );
       setEditRowId(null);
       setSuccessMessage("Request updated successfully!");
+
+      // 🔔 Send notification using your service method
+      await sendNotification({
+        receiverRole: "engineer",
+        message: `RMA request #${rowId} marked as ${updatedStatus}.`,
+        type: "REQUEST",
+        status: updatedStatus,
+      });
     } catch (error) {
       console.error("Error updating request:", error);
     }
@@ -82,15 +97,11 @@ const PartRequestManagementRMA = () => {
     navigate(`/show/${rowId}`);
   };
 
-  const formatDate = (dateString) => {
-    return dateString ? new Date(dateString).toLocaleDateString() : "N/A";
-  };
+  const formatDate = (dateString) =>
+    dateString ? new Date(dateString).toLocaleDateString() : "N/A";
 
   const handleCloseSnackbar = () => setSuccessMessage(null);
-
-  const handlePageChange = (_, newPage) => {
-    setPage(newPage);
-  };
+  const handlePageChange = (_, newPage) => setPage(newPage);
 
   const paginatedRequests = requests.slice((page - 1) * rowsPerPage, page * rowsPerPage);
   const totalPages = Math.ceil(requests.length / rowsPerPage);
@@ -158,7 +169,7 @@ const PartRequestManagementRMA = () => {
                           <TableCell>
                             {editRowId === row.id ? (
                               <Select
-                                value={tempStatus[row.id] || ""}
+                                value={tempStatus[row.id] || "Completed"}
                                 onChange={(e) =>
                                   setTempStatus({ ...tempStatus, [row.id]: e.target.value })
                                 }

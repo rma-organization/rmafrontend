@@ -48,9 +48,10 @@ const InventoryDetailsShow = () => {
     const fetchInventoryDetails = async () => {
       try {
         const response = await getInventoryById(id);
-        setInventoryItem(response);
+        setInventoryItem(response.data);
         setError(null);
       } catch (error) {
+        console.error("❌ Error fetching inventory details:", error);
         setError("Failed to fetch inventory details.");
       } finally {
         setLoading(false);
@@ -66,6 +67,7 @@ const InventoryDetailsShow = () => {
         const response = await axios.get(`${apiUrl}/api/vendors`);
         setVendors(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
+        console.error("❌ Error fetching vendors:", error);
         setVendors([]);
       }
     };
@@ -108,6 +110,7 @@ const InventoryDetailsShow = () => {
   }
 
   if (!inventoryItem) {
+    console.warn("No inventory item found for ID:", id);
     return (
       <Box p={2} mt={10}>
         <Typography variant="h6" color="error">
