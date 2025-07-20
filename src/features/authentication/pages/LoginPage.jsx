@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/LoginPage.css";
+import { jwtDecode } from "jwt-decode";
 
 // Import logo and background image
 import logoPath from "../../../assets/logo.png";
@@ -26,7 +27,7 @@ const LoginPage = ({ onLogin }) => {
       const response = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role }), // Send user input
+        body: JSON.stringify({ username, password, role }),
       });
 
       // Handle failed login
@@ -37,10 +38,19 @@ const LoginPage = ({ onLogin }) => {
 
       // Handle successful login
       const data = await response.json();
-      localStorage.setItem("token", data.token);       // Save token to local storage
-      localStorage.setItem("role", data.role);         // Save role
-      localStorage.setItem("username", username);      // Save username
-      onLogin({ token: data.token, role: data.role }); // Trigger parent login handler
+      // Store token and role in localStorage
+      console.log("Login Response:", data);
+
+      const decodedToken = jwtDecode(data.token);
+      console.log("Decoded Token:", decodedToken);
+      const sub = decodedToken.sub
+      localStorage.setItem("username", sub);
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+
+      // Call the onLogin function passed as a prop
+      onLogin({ token: data.token, role: data.role });
     } catch (error) {
       console.error("Login Error:", error);
       setError(error.message); // Show error message to user
@@ -52,7 +62,7 @@ const LoginPage = ({ onLogin }) => {
       className="login-container"
       style={{
         backgroundImage: `url(${backgroundPath})`,
-        backgroundSize: "cover",
+         backgroundSize: "cover",
         height: "100vh",
       }}
     >
@@ -63,11 +73,7 @@ const LoginPage = ({ onLogin }) => {
       {/* Login form box */}
       <div className="login-box">
         <h3 className="login-title">LOG IN</h3>
-
-        {/* Show error message if any */}
         {error && <p className="error-message">{error}</p>}
-
-        {/* Login form */}
         <form onSubmit={handleSubmit}>
           {/* Username input */}
           <input

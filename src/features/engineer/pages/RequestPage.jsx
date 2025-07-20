@@ -131,8 +131,8 @@ const RequestPage = () => {
 
     try {
       const url = id
-        ? `http://localhost:8080/api/requests/${id}`
-        : "http://localhost:8080/api/requests";
+        ? `http://localhost:8081/api/requests/${id}`
+        : "http://localhost:8081/api/requests";
       const method = id ? "PUT" : "POST";
 
       const response = await fetch(url, {

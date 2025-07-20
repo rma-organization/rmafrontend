@@ -46,7 +46,6 @@ const PartRequestManagementRMA = () => {
     fetchRequests();
   }, []);
 
-  // Only allow editing if the status is "Faulty Returned"
   const handleEdit = (row) => {
     if (row.status === "Faulty Returned") {
       setEditRowId(row.id);
@@ -57,7 +56,7 @@ const PartRequestManagementRMA = () => {
   const handleSave = async (rowId) => {
     try {
       const updatedStatus = tempStatus[rowId];
-      const response = await fetch('http://localhost:8080/api/requests/${rowId}', {
+      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: updatedStatus }),
@@ -68,7 +67,9 @@ const PartRequestManagementRMA = () => {
       }
 
       setRequests((prevRequests) =>
-        prevRequests.map((req) => (req.id === rowId ? { ...req, status: updatedStatus } : req))
+        prevRequests.map((req) =>
+          req.id === rowId ? { ...req, status: updatedStatus } : req
+        )
       );
       setEditRowId(null);
       setSuccessMessage("Request updated successfully!");
@@ -78,7 +79,7 @@ const PartRequestManagementRMA = () => {
   };
 
   const handleShow = (rowId) => {
-    navigate('/show/${rowId}');
+    navigate(`/show/${rowId}`);
   };
 
   const formatDate = (dateString) => {
@@ -103,7 +104,7 @@ const PartRequestManagementRMA = () => {
     "Faulty Returned": { backgroundColor: "#ff9800", color: "#fff" },
     Collected: { backgroundColor: "#17a2b8", color: "#fff" },
     Rejected: { backgroundColor: "#dc3545", color: "#fff" },
-    Completed: { backgroundColor: "#4caf50", color: "#fff" }, // New style for Completed
+    Completed: { backgroundColor: "#4caf50", color: "#fff" },
   };
 
   return (
@@ -115,7 +116,7 @@ const PartRequestManagementRMA = () => {
         message={successMessage}
       />
       <Box p={2} mt={10}>
-        <Button variant="contained" component={Link} to="/RMAHomePage">
+        <Button variant="contained" component={Link} to="/rma-home">
           Home
         </Button>
 

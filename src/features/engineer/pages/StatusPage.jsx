@@ -46,7 +46,6 @@ const ListRequestsComponent = () => {
 
   const handleEdit = (row) => {
     setEditRowId(row.id);
-    // Set the temporary status when you click Edit
     setTempStatus((prev) => ({ ...prev, [row.id]: row.status || "Requested" }));
   };
 
@@ -119,11 +118,11 @@ const ListRequestsComponent = () => {
     Completed: { backgroundColor: "#c46210", color: "#fff" },
   };
 
-  // Define valid transitions for each status
+  
   const validTransitions = {
     "At Office": ["Collected", "Faulty Returned"],
     Requested: [],
-    Collected: [],
+    Collected: ["Faulty Returned"], 
     "Faulty Returned": [],
     Approved: [],
     Declined: [],
@@ -132,12 +131,12 @@ const ListRequestsComponent = () => {
 
   return (
     <>
-      {/* <Snackbar
+      <Snackbar
         open={Boolean(successMessage)}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         message={successMessage}
-      /> */}
+      />
       <Box p={2} mt={10}>
         <Button variant="contained" component={Link} to="/" sx={{ mb: 3 }}>
           Home
@@ -207,7 +206,6 @@ const ListRequestsComponent = () => {
                                 fullWidth
                                 size="small"
                               >
-                                {/* Dynamically set the allowed status based on current status */}
                                 {validTransitions[row.status]?.map((status) => (
                                   <MenuItem key={status} value={status}>
                                     {status}
@@ -261,7 +259,6 @@ const ListRequestsComponent = () => {
                 </Table>
               </TableContainer>
 
-              {/* Pagination */}
               <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
                 <Pagination
                   count={Math.ceil(requests.length / rowsPerPage)}
