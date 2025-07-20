@@ -1,11 +1,9 @@
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import ResetPasswordPage from './features/authentication/pages/ResetPasswordPage';
+
 import SplashScreen from "./features/authentication/pages/SplashScreen";
 import LoginPage from "./features/authentication/pages/LoginPage";
 import SignUpPage from "./features/authentication/pages/SignUpPage";
-import ForgotPasswordPage from "./features/authentication/pages/ForgotPasswordPage";
-
 import AdminHomePage from "./features/admin/AdminHomePage";
 import RMAHomePage from "./features/rma/pages/RMAHomePage";
 import EngineerHomePage from "./features/engineer/pages/EngineerHomePage";
@@ -97,9 +95,6 @@ function App() {
             <Route path="/" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-             <Route path="/reset-password" element={<ResetPasswordPage />} />
-
 
             <Route element={<ProtectedRoute user={user} />}>
               <Route element={<MainLayout />}>
