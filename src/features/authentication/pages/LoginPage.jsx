@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import jwtDecode from "jwt-decode";
 import "../styles/LoginPage.css";
 
-
-import logoPath from "../../../assets/logo.png"; // Correct the path for the image
-import backgroundPath from "../../../assets/background.png"; // Correct the path for the image
+import logoPath from "../../../assets/logo.png";
+import backgroundPath from "../../../assets/background.png";
 
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState(""); 
+  const [role, setRole] = useState("");
   const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -21,7 +22,7 @@ const LoginPage = ({ onLogin }) => {
       const response = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role }), 
+        body: JSON.stringify({ username, password, role }),
       });
 
       if (!response.ok) {
@@ -30,11 +31,17 @@ const LoginPage = ({ onLogin }) => {
       }
 
       const data = await response.json();
-      // Store token and role in localStorage
-      localStorage.setItem("token", data.token); 
-      localStorage.setItem("role", data.role); 
 
-      // Call the onLogin function passed as a prop
+      // Decode JWT token to get username (subject)
+      const decodedToken = jwtDecode(data.token);
+      const decodedUsername = decodedToken.sub || username;
+
+      // Save JWT token, role, and username in localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("username", decodedUsername);
+
+      // Notify parent component about successful login
       onLogin({ token: data.token, role: data.role });
     } catch (error) {
       console.error("Login Error:", error);
@@ -51,15 +58,18 @@ const LoginPage = ({ onLogin }) => {
         height: "100vh",
       }}
     >
+      {/* Logo */}
       <img src={logoPath} alt="Millennium IT" className="logo" />
       <h2 className="login-heading">RMA Web Application</h2>
+
       <div className="login-box">
         <h3 className="login-title">LOG IN</h3>
-        {error && <p className="error-message">{error}</p>} 
+
+        {error && <p className="error-message">{error}</p>}
+
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            name="username"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -68,7 +78,6 @@ const LoginPage = ({ onLogin }) => {
           />
 
           <select
-            name="role"
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="input-field"
@@ -83,7 +92,6 @@ const LoginPage = ({ onLogin }) => {
 
           <input
             type="password"
-            name="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -92,15 +100,27 @@ const LoginPage = ({ onLogin }) => {
           />
 
           <div className="forgot-password">
-            <a href="/forgot-password">Forgot Password?</a>
+            <span
+              className="forgot-password-link"
+              onClick={() => navigate("/forgot-password")}
+              style={{ cursor: "pointer" }}
+            >
+              Forgot Password?
+            </span>
           </div>
+
           <button type="submit" className="login-button">
             LOG IN
           </button>
         </form>
+
         <p className="signup-text">
           Don't have an account?{" "}
-          <span className="signup-link" onClick={() => navigate("/signup")}>
+          <span
+            className="signup-link"
+            onClick={() => navigate("/signup")}
+            style={{ cursor: "pointer" }}
+          >
             Sign Up
           </span>
         </p>

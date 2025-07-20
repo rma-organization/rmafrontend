@@ -6,6 +6,7 @@ import {
   MenuItem, Select
 } from "@mui/material";
 
+// Optional role mapping for display (you can use it if you want)
 const roleMapping = {
   ADMIN: "System Admin",
   ENGINEER: "Engineer",
@@ -14,68 +15,75 @@ const roleMapping = {
 };
 
 const AddUser = () => {
+  // State to store pending users
   const [users, setUsers] = useState([]);
+
+  // Form state for selected username and status
   const [username, setUsername] = useState("");
   const [status, setStatus] = useState("PENDING");
 
+  // Fetch users on component mount
   useEffect(() => {
     fetchPendingUsers();
   }, []);
 
+  // Get pending users from backend
   const fetchPendingUsers = async () => {
     try {
       const response = await fetch("http://localhost:8080/api/auth/pending-users", {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
       const data = await response.json();
-      console.log("API Response:", data);
       setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching data:", error.message);
       setUsers([]);
     }
   };
 
+  // Form input handlers
   const handleUsernameChange = (event) => setUsername(event.target.value);
   const handleStatusChange = (event) => setStatus(event.target.value);
 
+  // Populate form with selected user's data
   const handleFillFields = (user) => {
     setUsername(user.username);
     setStatus(user.approvalStatus);
   };
 
+  // Send approval decision to backend
   const handleApproveUser = async () => {
     try {
       const response = await fetch("http://localhost:8080/api/auth/approve", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, approvalStatus: "APPROVED" }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, approvalStatus: status }),
       });
 
       if (response.ok) {
+        // Remove approved user from table
         setUsers(users.filter(user => user.username !== username));
         setUsername("");
         setStatus("PENDING");
       } else {
-        console.error("Failed to approve user");
+        const errorMsg = await response.text();
+        console.error("Failed to approve user:", errorMsg);
       }
     } catch (error) {
-      console.error("Error approving user:", error);
+      console.error("Error approving user:", error.message);
     }
   };
 
   return (
     <Card sx={{ maxWidth: "1100px", margin: "auto", mt: 4, padding: "20px", backgroundColor: "#f5f5f5" }}>
       <CardContent>
+        {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <Typography variant="h6">Add New User</Typography>
+          <Typography variant="h6">Approve User</Typography>
         </Box>
 
+        {/* User input form */}
         <Grid container spacing={3}>
           <Grid item xs={6}>
             <TextField
@@ -100,6 +108,7 @@ const AddUser = () => {
           </Grid>
         </Grid>
 
+        {/* Approve button */}
         <Button
           variant="contained"
           fullWidth
@@ -110,6 +119,7 @@ const AddUser = () => {
         </Button>
       </CardContent>
 
+      {/* Table of pending users */}
       <TableContainer component={Paper} sx={{ mt: 4 }}>
         <Table>
           <TableHead>
@@ -129,6 +139,7 @@ const AddUser = () => {
                   <TableCell>{user.username}</TableCell>
                   <TableCell>{user.roles.join(", ")}</TableCell>
                   <TableCell>
+                    {/* Load user details into form */}
                     <Button onClick={() => handleFillFields(user)}>Select</Button>
                   </TableCell>
                 </TableRow>

@@ -8,14 +8,16 @@ import {
   FormControl,
   Select,
   MenuItem,
-} from "@mui/material";
+  Snackbar,
+  Alert,
+} from "@mui/material";  // Added Snackbar and Alert
+
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const AddNewInventory = () => {
   const navigate = useNavigate();
 
-  // State for form fields
   const [formData, setFormData] = useState({
     name: "",
     boxPartNumber: "",
@@ -31,70 +33,49 @@ const AddNewInventory = () => {
     status: "",
     description: "",
     vendorId: "",
+    amount: "",
+    currency: "",
+    airwaybillnumber: "",
   });
 
-  const [error, setError] = useState(null); // Error state
-  const [vendors, setVendors] = useState([]); // Vendor state
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080"; // ✅ Fix fallback
+  const [error, setError] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [notificationOpen, setNotificationOpen] = useState(false); // <-- Notification state
+  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
-  // Fetch vendors when component mounts
   useEffect(() => {
     const fetchVendors = async () => {
       try {
         const response = await axios.get(`${apiUrl}/api/vendors`);
-        console.log("Fetched vendors:", response.data);
-
-        //  Ensure response is an array
         setVendors(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching vendors:", error);
-        setVendors([]); // Prevent issues with undefined state
+        setVendors([]);
       }
     };
-
     fetchVendors();
   }, [apiUrl]);
 
-  // Handle input change
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value || "", // Ensure controlled inputs
+      [name]: value || "",
     }));
   };
 
-  // Handle vendor dropdown change
-  const handleSelectChange = (event) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      vendorId: event.target.value,
-    }));
-  };
-
-  // Handle status dropdown change
-  const handleStatusChange = (event) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      status: event.target.value,
-    }));
-  };
-
-  // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError(null); // Clear previous errors
+    setError(null);
 
-    // Validation: Check if required fields are filled
     if (!formData.name || !formData.boxPartNumber || !formData.quantity || !formData.vendorId) {
       setError("Please fill in all required fields.");
       return;
     }
 
-    // Convert necessary fields to correct types before sending
     const submissionData = {
       ...formData,
-      quantity: Number(formData.quantity) || 0, // Ensure quantity is a number
+      quantity: Number(formData.quantity) || 0,
     };
 
     try {
@@ -106,7 +87,7 @@ const AddNewInventory = () => {
 
       console.log("Part added:", response.data);
 
-      // Reset the form after successful submission
+      // Clear form
       setFormData({
         name: "",
         boxPartNumber: "",
@@ -122,19 +103,34 @@ const AddNewInventory = () => {
         status: "",
         description: "",
         vendorId: "",
+        amount: "",
+        currency: "",
+        airwaybillnumber: "",
       });
 
-      // Redirect on success
+      // Show notification
+      setNotificationOpen(true);
+
+      // Optional: navigate after delay if you want
+      // setTimeout(() => navigate("/SuccessfullyAddInventory"), 3000);
+      // Or just keep as is, navigate immediately:
       navigate("/SuccessfullyAddInventory");
+
     } catch (error) {
       console.error("Error adding part:", error.response ? error.response.data : error);
       setError(error.response?.data?.message || "Failed to add inventory. Please try again.");
     }
   };
 
+  // Handle notification close
+  const handleNotificationClose = (event, reason) => {
+    if (reason === "clickaway") return;
+    setNotificationOpen(false);
+  };
+
   return (
-    <Box p={2} mt={8}>
-      <Box bgcolor="lightgray" p={2} borderRadius={1}>
+    <Box p={1} mt={8}>
+      <Box bgcolor="lightgray" p={1} borderRadius={1}>
         <Typography variant="h6" fontWeight="bold" color="black">
           Add New Part
         </Typography>
@@ -145,6 +141,7 @@ const AddNewInventory = () => {
 
         <Paper sx={{ padding: 3, mt: 2 }}>
           <form onSubmit={handleSubmit}>
+            {/* Your existing form layout (no changes) */}
             <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
               {/* Left Column */}
               <Box flex={1}>
@@ -157,6 +154,7 @@ const AddNewInventory = () => {
                   { label: "QTY", name: "quantity" },
                   { label: "Inventory Location", name: "inventoryLocation" },
                   { label: "MIT Reference Number", name: "mitNumber" },
+                  { label: "Item Type", name: "itemType" },
                 ].map((field, index) => (
                   <Box key={index} display="flex" alignItems="center" mb={2}>
                     <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
@@ -176,9 +174,11 @@ const AddNewInventory = () => {
               {/* Right Column */}
               <Box flex={1}>
                 {[
-                  { label: "Item Type", name: "itemType" },
                   { label: "PO Number", name: "poNumber" },
                   { label: "LOT Number", name: "lotNumber" },
+                  { label: "Airway Bill Number", name: "airwaybillnumber" },
+                  { label: "Currency", name: "currency" },
+                  { label: "Amount", name: "amount" },
                   { label: "Description", name: "description" },
                 ].map((field, index) => (
                   <Box key={index} display="flex" alignItems="center" mb={2}>
@@ -203,8 +203,15 @@ const AddNewInventory = () => {
                     Status
                   </Typography>
                   <FormControl fullWidth variant="outlined">
-                    <Select name="status" value={formData.status || ""} onChange={handleStatusChange} displayEmpty>
-                      <MenuItem value="" disabled>Select Status</MenuItem>
+                    <Select
+                      name="status"
+                      value={formData.status || ""}
+                      onChange={handleChange}
+                      displayEmpty
+                    >
+                      <MenuItem value="" disabled>
+                        Select Status
+                      </MenuItem>
                       <MenuItem value="Available">Available</MenuItem>
                       <MenuItem value="Not Available">Not Available</MenuItem>
                     </Select>
@@ -217,8 +224,15 @@ const AddNewInventory = () => {
                     Vendor
                   </Typography>
                   <FormControl fullWidth variant="outlined">
-                    <Select name="vendorId" value={formData.vendorId || ""} onChange={handleSelectChange} displayEmpty>
-                      <MenuItem value="" disabled>Select Vendor</MenuItem>
+                    <Select
+                      name="vendorId"
+                      value={formData.vendorId || ""}
+                      onChange={handleChange}
+                      displayEmpty
+                    >
+                      <MenuItem value="" disabled>
+                        Select Vendor
+                      </MenuItem>
                       {Array.isArray(vendors) && vendors.length > 0 ? (
                         vendors.map((vendor) => (
                           <MenuItem key={vendor.id} value={vendor.id}>
@@ -234,18 +248,38 @@ const AddNewInventory = () => {
               </Box>
             </Box>
 
-            {/* Error Message */}
-            {error && <Typography color="error" mt={2}>{error}</Typography>}
+            {error && (
+              <Typography color="error" mt={2}>
+                {error}
+              </Typography>
+            )}
 
-            {/* Add Part Button */}
             <Box mt={3}>
-              <Button fullWidth type="submit" variant="contained" sx={{ backgroundColor: "blue", color: "white" }} disableElevation>
+              <Button
+                fullWidth
+                type="submit"
+                variant="contained"
+                sx={{ backgroundColor: "blue", color: "white" }}
+                disableElevation
+              >
                 Add Part
               </Button>
             </Box>
           </form>
         </Paper>
       </Box>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notificationOpen}
+        autoHideDuration={3000}
+        onClose={handleNotificationClose}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert onClose={handleNotificationClose} severity="success" sx={{ width: "100%" }}>
+          Part added successfully!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
