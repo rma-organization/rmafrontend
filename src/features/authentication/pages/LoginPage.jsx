@@ -3,20 +3,21 @@ import { useNavigate } from "react-router-dom";
 import "../styles/LoginPage.css";
 import { jwtDecode } from "jwt-decode";
 
-
-import logoPath from "../../../assets/logo.png"; // Correct the path for the image
-import backgroundPath from "../../../assets/background.png"; // Correct the path for the image
+// Import logo and background image
+import logoPath from "../../../assets/logo.png";
+import backgroundPath from "../../../assets/background.png";
 
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError("");
 
     try {
       const response = await fetch("http://localhost:8080/api/auth/login", {
@@ -31,18 +32,17 @@ const LoginPage = ({ onLogin }) => {
       }
 
       const data = await response.json();
-      // Store token and role in localStorage
-      console.log("Login Response:", data);
 
+      // Decode JWT to extract username if available
       const decodedToken = jwtDecode(data.token);
-      console.log("Decoded Token:", decodedToken);
-      const sub = decodedToken.sub
-      localStorage.setItem("username", sub);
+      const decodedUsername = decodedToken.sub || username;
 
+      // Store auth data in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
+      localStorage.setItem("username", decodedUsername);
 
-      // Call the onLogin function passed as a prop
+      // Trigger login callback to parent
       onLogin({ token: data.token, role: data.role });
     } catch (error) {
       console.error("Login Error:", error);
@@ -55,15 +55,19 @@ const LoginPage = ({ onLogin }) => {
       className="login-container"
       style={{
         backgroundImage: `url(${backgroundPath})`,
-         backgroundSize: "cover",
+        backgroundSize: "cover",
         height: "100vh",
       }}
     >
+      {/* Logo */}
       <img src={logoPath} alt="Millennium IT" className="logo" />
       <h2 className="login-heading">RMA Web Application</h2>
+
       <div className="login-box">
         <h3 className="login-title">LOG IN</h3>
+
         {error && <p className="error-message">{error}</p>}
+
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -100,12 +104,19 @@ const LoginPage = ({ onLogin }) => {
           />
 
           <div className="forgot-password">
-            <a href="/forgot-password">Forgot Password?</a>
+            <span
+              className="forgot-password-link"
+              onClick={() => navigate("/forgot-password")}
+            >
+              Forgot Password?
+            </span>
           </div>
+
           <button type="submit" className="login-button">
             LOG IN
           </button>
         </form>
+
         <p className="signup-text">
           Don't have an account?{" "}
           <span className="signup-link" onClick={() => navigate("/signup")}>

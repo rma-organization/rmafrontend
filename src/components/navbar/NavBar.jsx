@@ -29,7 +29,6 @@ export default function NavBar() {
   const [chatOpen, setChatOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Update unread chat count
   const handleUnreadCountUpdate = (count) => {
     setUnreadCount(count);
   };
@@ -44,18 +43,13 @@ export default function NavBar() {
       return;
     }
 
-    if (storedUsername) {
-      setUsername(storedUsername);
-    }
-
-    if (storedRole) {
-      setRole(storedRole);
-    }
+    setUsername(storedUsername || "");
+    setRole(storedRole || "USER");
 
     const fetchNotifications = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8080/api/notifications?role=${storedRole || role}&page=dashboard`,
+          `http://localhost:8080/api/notifications?role=${storedRole}&page=dashboard`,
           {
             method: "GET",
             headers: {
@@ -68,8 +62,6 @@ export default function NavBar() {
         if (!response.ok) {
           if (response.status === 401) {
             handleLogout();
-          } else if (response.status === 403) {
-            throw new Error("Access denied: You do not have permission.");
           } else {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
@@ -84,7 +76,7 @@ export default function NavBar() {
     };
 
     fetchNotifications();
-  }, [navigate, role]);
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -104,6 +96,8 @@ export default function NavBar() {
   const toggleChatDrawer = () => {
     setChatOpen(!chatOpen);
   };
+
+  const unreadNotifications = notifications.filter((n) => !n.read).length;
 
   return (
     <>
@@ -133,15 +127,22 @@ export default function NavBar() {
                   },
                 }}
               >
-                {/* Notifications Icon */}
-                <IconButton color="inherit">
-                  <Badge badgeContent={notifications.length} color="error">
+                {/* Notifications */}
+                <IconButton
+                  color="inherit"
+                  aria-label="notifications"
+                >
+                  <Badge badgeContent={unreadNotifications} color="error">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
 
-                {/* Chat Icon */}
-                <IconButton color="inherit" onClick={toggleChatDrawer}>
+                {/* Chat Drawer */}
+                <IconButton
+                  color="inherit"
+                  aria-label="open chat"
+                  onClick={toggleChatDrawer}
+                >
                   <Badge badgeContent={unreadCount} color="error">
                     <MailIcon />
                   </Badge>
@@ -150,15 +151,12 @@ export default function NavBar() {
                 {/* Username */}
                 <Typography
                   variant="subtitle1"
-                  sx={{
-                    fontWeight: 500,
-                    display: { xs: "none", sm: "block" },
-                  }}
+                  sx={{ fontWeight: 500, display: { xs: "none", sm: "block" } }}
                 >
                   {username || "User"}
                 </Typography>
 
-                {/* Avatar/Profile Icon */}
+                {/* Avatar */}
                 <IconButton
                   edge="end"
                   aria-label="account of current user"
@@ -176,7 +174,7 @@ export default function NavBar() {
                       color: "primary.contrastText",
                     }}
                   >
-                    {username ? username.charAt(0).toUpperCase() : <AccountCircle />}
+                    {username ? username.charAt(0).toUpperCase() : "U"}
                   </Avatar>
                 </IconButton>
               </Box>
@@ -258,7 +256,13 @@ export default function NavBar() {
               backgroundColor: "#f5f5f5",
               minHeight: "100vh",
             }}
-          ></Box>
+          >
+            {error && (
+              <Typography color="error" sx={{ px: 2 }}>
+                {error}
+              </Typography>
+            )}
+          </Box>
         </Box>
       </Box>
     </>
