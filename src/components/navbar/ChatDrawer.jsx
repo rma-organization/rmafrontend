@@ -511,7 +511,7 @@ const ChatDrawer = ({ open, onClose, onUnreadCountUpdate }) => {
       onClose={onClose}
       open={open}
       closable={false}
-      bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}
+      styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', height: '100%' } }}
     >
       {connectionStatus !== 'connected' && (
         <Alert

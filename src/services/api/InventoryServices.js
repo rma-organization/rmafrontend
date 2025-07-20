@@ -1,6 +1,3 @@
-
-
-
 import axiosInstance from "./axios";
 
 const BASE_URL = "/api";
@@ -74,3 +71,6 @@ export const getUserNotifications = () =>
 
 export const updateNotificationStatus = (notificationId, status) =>
   axiosInstance.put(`${NOTIFICATION_BASE_URL}/${notificationId}/status?status=${status}`);
+
+
+

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import jwtDecode from "jwt-decode"; // default import for jwt-decode v4
+import jwtDecode from "jwt-decode";
 import "../styles/LoginPage.css";
 
-// Import logo and background image
 import logoPath from "../../../assets/logo.png";
 import backgroundPath from "../../../assets/background.png";
 
@@ -15,12 +14,9 @@ const LoginPage = ({ onLogin }) => {
 
   const navigate = useNavigate();
 
-  // Workaround for Vite + jwt-decode default export interop
-  const decodeJwt = jwtDecode.default || jwtDecode;
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError(""); // Clear previous errors
 
     try {
       const response = await fetch("http://localhost:8080/api/auth/login", {
@@ -36,8 +32,8 @@ const LoginPage = ({ onLogin }) => {
 
       const data = await response.json();
 
-      // Decode JWT token using the fixed decodeJwt function
-      const decodedToken = decodeJwt(data.token);
+      // Decode JWT token to get username (subject)
+      const decodedToken = jwtDecode(data.token);
       const decodedUsername = decodedToken.sub || username;
 
       // Save JWT token, role, and username in localStorage
@@ -47,9 +43,6 @@ const LoginPage = ({ onLogin }) => {
 
       // Notify parent component about successful login
       onLogin({ token: data.token, role: data.role });
-
-      // Navigate to dashboard or other page after login
-      navigate("/dashboard");
     } catch (error) {
       console.error("Login Error:", error);
       setError(error.message);

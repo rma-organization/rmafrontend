@@ -11,7 +11,6 @@ import {
   Menu,
   MenuItem,
   Avatar,
-  Button,
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon,
@@ -39,20 +38,24 @@ export default function NavBar() {
     const storedUsername = localStorage.getItem("username");
     const storedRole = localStorage.getItem("role");
 
-    if (!token || !storedRole) return;
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-    setUsername(storedUsername || "");
-    setRole(storedRole || "USER");
+    if (storedUsername) setUsername(storedUsername);
+    if (storedRole) setRole(storedRole);
 
     const fetchNotifications = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8080/api/notifications?role=${storedRole}&page=dashboard`,
+          `http://localhost:8080/api/notifications/role`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
+              Role: storedRole || role,
             },
           }
         );
@@ -60,6 +63,8 @@ export default function NavBar() {
         if (!response.ok) {
           if (response.status === 401) {
             handleLogout();
+          } else if (response.status === 403) {
+            throw new Error("Access denied: You do not have permission.");
           } else {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
@@ -67,20 +72,21 @@ export default function NavBar() {
 
         const data = await response.json();
         setNotifications(data);
-        const unread = data.filter((n) => !n.read).length;
-        setUnreadCount(unread);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-        setError("Failed to load notifications");
+
+        // Optional: uncomment if you want to calculate unread count from here
+        // const unread = data.filter((n) => !n.read).length;
+        // setUnreadCount(unread);
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+        setError(err.message || "Failed to load notifications");
       }
     };
 
     fetchNotifications();
 
-    // Optionally, poll notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, [navigate]);
+  }, [navigate, role]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -98,7 +104,7 @@ export default function NavBar() {
   };
 
   const toggleChatDrawer = () => {
-    setChatOpen(!chatOpen);
+    setChatOpen((prev) => !prev);
   };
 
   return (
@@ -129,14 +135,16 @@ export default function NavBar() {
                   },
                 }}
               >
-                {/* Notifications */}
-                <IconButton color="inherit" aria-label="notifications" onClick={() => navigate("/notifications")}>
-                  <Badge badgeContent={unreadCount} color="error">
-                    <NotificationsIcon />
-                  </Badge>
+                {/* Notifications Icon (count removed) */}
+                <IconButton
+                  color="inherit"
+                  aria-label="notifications"
+                  onClick={() => navigate("/notifications")}
+                >
+                  <NotificationsIcon />
                 </IconButton>
 
-                {/* Chat Drawer */}
+                {/* Chat Icon (count remains here if needed) */}
                 <IconButton
                   color="inherit"
                   aria-label="open chat"
@@ -155,7 +163,7 @@ export default function NavBar() {
                   {username || "User"}
                 </Typography>
 
-                {/* Avatar */}
+                {/* Avatar/Profile Icon */}
                 <IconButton
                   edge="end"
                   aria-label="account of current user"
@@ -173,7 +181,9 @@ export default function NavBar() {
                       color: "primary.contrastText",
                     }}
                   >
-                    {username ? username.charAt(0).toUpperCase() : "U"}
+                    {username
+                      ? username.charAt(0).toUpperCase()
+                      : <AccountCircle />}
                   </Avatar>
                 </IconButton>
               </Box>
@@ -212,11 +222,7 @@ export default function NavBar() {
               <Typography variant="subtitle1" fontWeight="bold">
                 {username || "User"}
               </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 0.5 }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 {role || "No role"}
               </Typography>
             </Box>
@@ -244,7 +250,7 @@ export default function NavBar() {
             onUnreadCountUpdate={handleUnreadCountUpdate}
           />
 
-          {/* Main Content */}
+          {/* Main Content Area */}
           <Box
             component="main"
             sx={{
@@ -257,7 +263,7 @@ export default function NavBar() {
             }}
           >
             {error && (
-              <Typography color="error" sx={{ px: 2 }}>
+              <Typography color="error" sx={{ px: 2, mb: 1 }}>
                 {error}
               </Typography>
             )}
