@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaEnvelope, FaLock, FaUsers, FaCheck } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaUsers, FaCheck, FaEye, FaEyeSlash } from "react-icons/fa";
 import "../styles/SignUpPage.css"; 
 
 import logoPath from "../../../assets/logo.png"; // Ensure correct path
@@ -14,6 +14,7 @@ const SignUpPage = () => {
     role: [],
   });
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false); // Password visibility
   const navigate = useNavigate();
 
   const ROLES = ["RMA", "ENGINEER", "SUPPLYCHAIN", "ADMIN"];
@@ -46,7 +47,15 @@ const SignUpPage = () => {
     let tempErrors = {};
     if (!formData.username.trim()) tempErrors.username = "Username is required!";
     if (!formData.email.trim()) tempErrors.email = "Email is required!";
-    if (!formData.password) tempErrors.password = "Password is required!";
+    if (!formData.password) {
+      tempErrors.password = "Password is required!";
+    } else {
+      const minLength = /.{8,}/;
+      if (!minLength.test(formData.password)) {
+        tempErrors.password = "Password must be at least 8 characters.";
+      }
+    }
+    
     if (formData.role.length === 0) tempErrors.role = "Please select at least one role!";
 
     setErrors(tempErrors);
@@ -60,14 +69,12 @@ const SignUpPage = () => {
     const apiURL = "http://localhost:8080/api/auth/register";
     
     try {
-      // Check if backend is running
       const testResponse = await fetch(apiURL, { method: "OPTIONS" });
       if (!testResponse.ok) {
         throw new Error(`Server not reachable. Status: ${testResponse.status}`);
       }
 
-      // Send signup request
-      const response = await fetch("http://localhost:8080/api/auth/register", {
+      const response = await fetch(apiURL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -77,7 +84,7 @@ const SignUpPage = () => {
           roles: formData.role, 
         }),
       });
-     console.log()
+
       if (response.ok) {
         alert("Signup successful!");
         navigate("/login");
@@ -139,17 +146,31 @@ const SignUpPage = () => {
             {errors.email && <small className="error-text">{errors.email}</small>}
           </div>
 
-          {/* Password Field */}
-          <div className="input-group">
+          {/* Password Field with Eye Toggle */}
+          <div className="input-group" style={{ position: "relative" }}>
             <FaLock className="icon" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Password"
               value={formData.password}
               onChange={handleInputChange}
               required
             />
+            <span
+              className="toggle-password"
+              onClick={() => setShowPassword(prev => !prev)}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                color: "#666"
+              }}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
             {errors.password && <small className="error-text">{errors.password}</small>}
           </div>
 

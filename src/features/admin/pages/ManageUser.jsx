@@ -15,7 +15,7 @@ import {
 import { TableVirtuoso } from "react-virtuoso";
 import { useNavigate } from "react-router-dom";
 
-// Table column configuration
+// Define table columns
 const columns = [
   { width: 25, label: "ID", dataKey: "id" },
   { width: 150, label: "Name", dataKey: "username" },
@@ -30,11 +30,11 @@ const ManageUser = () => {
   const itemsPerPage = 10;
   const navigate = useNavigate();
 
-  // Fetch users without authentication
+  // Fetch all users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/auth/users"); // ✅ No Authorization header
+        const response = await fetch("http://localhost:8080/api/auth/users");
         const data = await response.json();
         setUsers(data);
       } catch (error) {
@@ -44,12 +44,15 @@ const ManageUser = () => {
     fetchUsers();
   }, []);
 
+  // Handle pagination
   const handlePageChange = (_event, newPage) => {
     setPage(newPage);
   };
 
+  // Get current page data
   const paginatedData = users.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
+  // Customize table structure for virtualization
   const VirtuosoTableComponents = {
     Scroller: React.forwardRef((props, ref) => (
       <TableContainer component={Paper} {...props} ref={ref} />
@@ -60,6 +63,7 @@ const ManageUser = () => {
     TableBody: React.forwardRef((props, ref) => <TableBody {...props} ref={ref} />),
   };
 
+  // Header row
   const fixedHeaderContent = () => (
     <TableRow>
       {columns.map((column) => (
@@ -76,6 +80,7 @@ const ManageUser = () => {
     </TableRow>
   );
 
+  // Row data rendering
   const rowContent = (_index, row) => (
     <>
       {columns.map((column) => (
@@ -90,21 +95,29 @@ const ManageUser = () => {
 
   return (
     <Box p={2} mt={1}>
-      <Button variant="contained" disableElevation onClick={() => navigate("/")}>Home</Button>
+      {/* Navigation button */}
+      <Button variant="contained" disableElevation onClick={() => navigate("/")}>
+        Home
+      </Button>
 
+      {/* User management panel */}
       <Box bgcolor="lightgray" p={1} mt={5} borderRadius={1}>
         <Typography variant="h6" fontWeight="bold" color="black" mt={4}>
           Manage User
         </Typography>
 
-        <Paper style={{ height: 300, width: "100%", marginTop: 10 }}>
-          <TableVirtuoso
-            data={paginatedData}
-            components={VirtuosoTableComponents}
-            fixedHeaderContent={fixedHeaderContent}
-            itemContent={rowContent}
-          />
-
+        {/* Virtualized table */}
+        <Paper sx={{ width: '100%', minHeight: '60vh', height: '100%', marginTop: 2, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
+          <Box sx={{ flex: 1, minHeight: '0' }}>
+            <TableVirtuoso
+              data={paginatedData}
+              components={VirtuosoTableComponents}
+              fixedHeaderContent={fixedHeaderContent}
+              itemContent={rowContent}
+              style={{ height: '100%', minHeight: '50vh' }}
+            />
+          </Box>
+          {/* Pagination controls */}
           <Box display="flex" justifyContent="flex-end" mt={2} p={2}>
             <Pagination
               count={Math.ceil(users.length / itemsPerPage)}
@@ -120,3 +133,4 @@ const ManageUser = () => {
 };
 
 export default ManageUser;
+
