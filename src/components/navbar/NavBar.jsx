@@ -8,6 +8,9 @@ import {
   IconButton,
   Badge,
   CssBaseline,
+  Menu,
+  MenuItem,
+  Avatar,
   Button,
 } from "@mui/material";
 import {
@@ -15,46 +18,87 @@ import {
   Mail as MailIcon,
   AccountCircle,
 } from "@mui/icons-material";
+import ChatDrawer from "./ChatDrawer";
 
 export default function NavBar() {
-  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [role, setRole] = useState("USER");
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleUnreadCountUpdate = (count) => {
+    setUnreadCount(count);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    const storedUsername = localStorage.getItem("username");
+    const storedRole = localStorage.getItem("role");
 
-    if (!token || !role) return;
+    if (!token || !storedRole) return;
 
-    const fetchUnreadCount = async () => {
+    setUsername(storedUsername || "");
+    setRole(storedRole || "USER");
+
+    const fetchNotifications = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/notifications/unread-count", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        });
+        const response = await fetch(
+          `http://localhost:8080/api/notifications?role=${storedRole}&page=dashboard`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-        if (res.ok) {
-          const count = await res.json();
-          setUnreadCount(count);
+        if (!response.ok) {
+          if (response.status === 401) {
+            handleLogout();
+          } else {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
         }
+
+        const data = await response.json();
+        setNotifications(data);
+        const unread = data.filter((n) => !n.read).length;
+        setUnreadCount(unread);
       } catch (error) {
-        console.error("Error fetching unread count:", error);
+        console.error("Error fetching notifications:", error);
+        setError("Failed to load notifications");
       }
     };
 
-    fetchUnreadCount();
+    fetchNotifications();
 
-    // Optionally poll every 30 seconds for updates
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Optionally, poll notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
+    localStorage.removeItem("username");
     navigate("/login");
+  };
+
+  const handleProfileMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const toggleChatDrawer = () => {
+    setChatOpen(!chatOpen);
   };
 
   return (
@@ -69,42 +113,138 @@ export default function NavBar() {
               backgroundColor: "#fff",
               color: "#000",
               boxShadow: 1,
-              width: `calc(100% - 320px)`,
+              width: "calc(100% - 320px)",
               left: "320px",
             }}
           >
             <Toolbar sx={{ display: "flex", justifyContent: "flex-end" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  "& > *": {
+                    display: "flex",
+                    alignItems: "center",
+                  },
+                }}
+              >
                 {/* Notifications */}
-                <IconButton onClick={() => navigate("/notifications")}>
+                <IconButton color="inherit" aria-label="notifications" onClick={() => navigate("/notifications")}>
                   <Badge badgeContent={unreadCount} color="error">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>
 
-                {/* Messages placeholder */}
-                <IconButton>
-                  <Badge badgeContent={2} color="error">
+                {/* Chat Drawer */}
+                <IconButton
+                  color="inherit"
+                  aria-label="open chat"
+                  onClick={toggleChatDrawer}
+                >
+                  <Badge badgeContent={unreadCount} color="error">
                     <MailIcon />
                   </Badge>
                 </IconButton>
 
-                <Typography fontWeight="bold">Suranjan Nayanjith</Typography>
-                <AccountCircle />
-
-                {/* Logout */}
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={handleLogout}
-                  sx={{ ml: 2 }}
+                {/* Username */}
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 500, display: { xs: "none", sm: "block" } }}
                 >
-                  Logout
-                </Button>
+                  {username || "User"}
+                </Typography>
+
+                {/* Avatar */}
+                <IconButton
+                  edge="end"
+                  aria-label="account of current user"
+                  aria-controls="primary-search-account-menu"
+                  aria-haspopup="true"
+                  onClick={handleProfileMenuOpen}
+                  color="inherit"
+                  sx={{ p: 0 }}
+                >
+                  <Avatar
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                    }}
+                  >
+                    {username ? username.charAt(0).toUpperCase() : "U"}
+                  </Avatar>
+                </IconButton>
               </Box>
             </Toolbar>
           </AppBar>
 
+          {/* Profile Menu */}
+          <Menu
+            anchorEl={anchorEl}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            sx={{
+              "& .MuiPaper-root": {
+                minWidth: "200px",
+                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+                borderRadius: "8px",
+              },
+            }}
+          >
+            <Box
+              sx={{
+                px: 2,
+                py: 1,
+                borderBottom: "1px solid rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="bold">
+                {username || "User"}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5 }}
+              >
+                {role || "No role"}
+              </Typography>
+            </Box>
+
+            <MenuItem
+              onClick={() => {
+                handleMenuClose();
+                handleLogout();
+              }}
+              sx={{
+                color: "error.main",
+                "&:hover": {
+                  backgroundColor: "rgba(244, 67, 54, 0.08)",
+                },
+              }}
+            >
+              <Typography variant="body1">Logout</Typography>
+            </MenuItem>
+          </Menu>
+
+          {/* Chat Drawer */}
+          <ChatDrawer
+            open={chatOpen}
+            onClose={toggleChatDrawer}
+            onUnreadCountUpdate={handleUnreadCountUpdate}
+          />
+
+          {/* Main Content */}
           <Box
             component="main"
             sx={{
@@ -116,6 +256,11 @@ export default function NavBar() {
               minHeight: "100vh",
             }}
           >
+            {error && (
+              <Typography color="error" sx={{ px: 2 }}>
+                {error}
+              </Typography>
+            )}
             {/* Page content goes here */}
           </Box>
         </Box>

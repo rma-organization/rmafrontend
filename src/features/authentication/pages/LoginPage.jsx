@@ -1,8 +1,9 @@
-// export default LoginPage;
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import jwtDecode from "jwt-decode";
 import "../styles/LoginPage.css";
 
+// Import logo and background image
 import logoPath from "../../../assets/logo.png";
 import backgroundPath from "../../../assets/background.png";
 
@@ -11,6 +12,7 @@ const LoginPage = ({ onLogin }) => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -31,13 +33,17 @@ const LoginPage = ({ onLogin }) => {
 
       const data = await response.json();
 
-      // Save JWT token and role in localStorage for authenticated requests
+      // Decode JWT token to get username (subject)
+      const decodedToken = jwtDecode(data.token);
+      const decodedUsername = decodedToken.sub || username;
+
+      // Save JWT token, role, and username in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
+      localStorage.setItem("username", decodedUsername);
 
-      // Call onLogin callback to update app state or redirect user
+      // Notify parent component about successful login
       onLogin({ token: data.token, role: data.role });
-
     } catch (error) {
       console.error("Login Error:", error);
       setError(error.message);
@@ -53,11 +59,15 @@ const LoginPage = ({ onLogin }) => {
         height: "100vh",
       }}
     >
+      {/* Logo */}
       <img src={logoPath} alt="Millennium IT" className="logo" />
       <h2 className="login-heading">RMA Web Application</h2>
+
       <div className="login-box">
         <h3 className="login-title">LOG IN</h3>
+
         {error && <p className="error-message">{error}</p>}
+
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -67,6 +77,7 @@ const LoginPage = ({ onLogin }) => {
             className="input-field"
             required
           />
+
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
@@ -79,6 +90,7 @@ const LoginPage = ({ onLogin }) => {
             <option value="SUPPLYCHAIN">SUPPLYCHAIN</option>
             <option value="ENGINEER">ENGINEER</option>
           </select>
+
           <input
             type="password"
             placeholder="Password"
@@ -87,16 +99,29 @@ const LoginPage = ({ onLogin }) => {
             className="input-field"
             required
           />
+
           <div className="forgot-password">
-            <a href="/forgot-password">Forgot Password?</a>
+            <span
+              className="forgot-password-link"
+              onClick={() => navigate("/forgot-password")}
+              style={{ cursor: "pointer" }}
+            >
+              Forgot Password?
+            </span>
           </div>
+
           <button type="submit" className="login-button">
             LOG IN
           </button>
         </form>
+
         <p className="signup-text">
           Don't have an account?{" "}
-          <span className="signup-link" onClick={() => navigate("/signup")}>
+          <span
+            className="signup-link"
+            onClick={() => navigate("/signup")}
+            style={{ cursor: "pointer" }}
+          >
             Sign Up
           </span>
         </p>

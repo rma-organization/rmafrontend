@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -133,9 +132,7 @@ const RequestPage = () => {
       ...formData,
       vendor: { id: Number(formData.vendor) },
       customer: { id: Number(formData.customer) },
-      requestedUserId: formData.requestedUserId
-        ? Number(formData.requestedUserId)
-        : null,
+      requestedUserId: formData.requestedUserId ? Number(formData.requestedUserId) : null,
       updatedAt: new Date().toISOString(),
     };
 
@@ -176,8 +173,27 @@ const RequestPage = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 3, p: 2, bgcolor: "#FFFBFB", borderRadius: 2, boxShadow: 2, border: "1px solid #ECE7E7" }}>
-      <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#ECE7E7", p: 1.5, borderRadius: "8px 8px 0 0", justifyContent: "space-between" }}>
+    <Container
+      maxWidth="md"
+      sx={{
+        mt: 3,
+        p: 2,
+        bgcolor: "#FFFBFB",
+        borderRadius: 2,
+        boxShadow: 2,
+        border: "1px solid #ECE7E7",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          bgcolor: "#ECE7E7",
+          p: 1.5,
+          borderRadius: "8px 8px 0 0",
+          justifyContent: "space-between",
+        }}
+      >
         <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
           {id ? "Edit Request" : "Add New Request"}
         </Typography>
@@ -202,41 +218,149 @@ const RequestPage = () => {
         </Box>
       ) : (
         <form onSubmit={handleSubmit}>
-          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
             <Box sx={{ flex: 1 }}>
-              <TextField fullWidth size="small" label="Name" name="name" value={formData.name} onChange={handleChange} required sx={{ mb: 1.5 }} />
-              <TextField fullWidth select size="small" label="Status" name="status" value={formData.status} onChange={handleChange} sx={{ mb: 1.5 }}>
-                {["Requested", "Approved", "Rejected", "In Progress", "Completed"].map((status) => (
-                  <MenuItem key={status} value={status}>{status}</MenuItem>
+              <TextField
+                fullWidth
+                size="small"
+                label="Name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                sx={{ mb: 1.5 }}
+              />
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                sx={{ mb: 1.5 }}
+              >
+                {[
+                  "Requested",
+                  "Approved",
+                  "Rejected",
+                  "In Progress",
+                  "Completed",
+                ].map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
                 ))}
               </TextField>
-              <TextField fullWidth select size="small" label="Vendor" name="vendor" value={formData.vendor} onChange={handleChange} required sx={{ mb: 1.5 }}>
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Vendor"
+                name="vendor"
+                value={formData.vendor}
+                onChange={handleChange}
+                required
+                sx={{ mb: 1.5 }}
+              >
                 {vendors.map((v) => (
-                  <MenuItem key={v.id} value={v.id}>{v.name}</MenuItem>
+                  <MenuItem key={v.id} value={v.id}>
+                    {v.name}
+                  </MenuItem>
                 ))}
               </TextField>
-              <TextField fullWidth select size="small" label="Customer" name="customer" value={formData.customer} onChange={handleChange} required sx={{ mb: 1.5 }}>
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Customer"
+                name="customer"
+                value={formData.customer}
+                onChange={handleChange}
+                required
+                sx={{ mb: 1.5 }}
+              >
                 {customers.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name}
+                  </MenuItem>
                 ))}
               </TextField>
-              <TextField fullWidth size="small" label="SR Number" name="srNumber" value={formData.srNumber} onChange={handleChange} sx={{ mb: 1.5 }} />
-              <TextField fullWidth size="small" label="Field Service Task Number" name="fieldServiceTaskNumber" value={formData.fieldServiceTaskNumber} onChange={handleChange} sx={{ mb: 1.5 }} />
-              <TextField fullWidth size="small" label="Fault Part Number" name="faultPartNumber" value={formData.faultPartNumber} onChange={handleChange} sx={{ mb: 1.5 }} />
-              <TextField fullWidth size="small" label="Email ID" name="mailIds" value={formData.mailIds} onChange={handleChange} sx={{ mb: 1.5 }} />
-              <TextField fullWidth label="Description" name="description" value={formData.description} onChange={handleChange} multiline rows={3} sx={{ mb: 1.5 }} />
+              <TextField
+                fullWidth
+                size="small"
+                label="SR Number"
+                name="srNumber"
+                value={formData.srNumber}
+                onChange={handleChange}
+                sx={{ mb: 1.5 }}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Field Service Task Number"
+                name="fieldServiceTaskNumber"
+                value={formData.fieldServiceTaskNumber}
+                onChange={handleChange}
+                sx={{ mb: 1.5 }}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Fault Part Number"
+                name="faultPartNumber"
+                value={formData.faultPartNumber}
+                onChange={handleChange}
+                sx={{ mb: 1.5 }}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Email ID"
+                name="mailIds"
+                value={formData.mailIds}
+                onChange={handleChange}
+                sx={{ mb: 1.5 }}
+              />
+              <TextField
+                fullWidth
+                label="Description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                multiline
+                rows={3}
+                sx={{ mb: 1.5 }}
+              />
             </Box>
 
             <Divider orientation="vertical" flexItem sx={{ backgroundColor: "#E0E0E0" }} />
 
             <Box sx={{ flex: 0.4 }}>
-              <TextField fullWidth size="small" label="Part Number" name="partId" value={formData.partId} onChange={handleChange} sx={{ mb: 1.5 }} />
+              <TextField
+                fullWidth
+                size="small"
+                label="Part Number"
+                name="partId"
+                value={formData.partId}
+                onChange={handleChange}
+                sx={{ mb: 1.5 }}
+              />
             </Box>
           </Box>
 
-          <Button type="submit" variant="contained" sx={{ mt: 2, width: "100%" }} disabled={submitting}>
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{ mt: 2, width: "100%" }}
+            disabled={submitting}
+          >
             {submitting ? (id ? "Updating..." : "Submitting...") : id ? "Update Request" : "Request Part"}
           </Button>
         </form>
@@ -246,5 +370,3 @@ const RequestPage = () => {
 };
 
 export default RequestPage;
-
-

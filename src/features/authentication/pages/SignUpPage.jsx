@@ -1,8 +1,6 @@
-
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaEnvelope, FaLock, FaUsers, FaCheck } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaUsers, FaCheck, FaEye, FaEyeSlash } from "react-icons/fa";
 import "../styles/SignUpPage.css";
 
 import logoPath from "../../../assets/logo.png";
@@ -16,6 +14,7 @@ const SignUpPage = () => {
     role: [],
   });
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const ROLES = ["RMA", "ENGINEER", "SUPPLYCHAIN", "ADMIN"];
@@ -33,14 +32,8 @@ const SignUpPage = () => {
       setFormData((prev) => ({ ...prev, role: updatedRoles }));
       setErrors((prev) => ({ ...prev, role: "" }));
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -48,9 +41,12 @@ const SignUpPage = () => {
     let tempErrors = {};
     if (!formData.username.trim()) tempErrors.username = "Username is required!";
     if (!formData.email.trim()) tempErrors.email = "Email is required!";
-    if (!formData.password) tempErrors.password = "Password is required!";
-    if (formData.role.length === 0)
-      tempErrors.role = "Please select at least one role!";
+    if (!formData.password) {
+      tempErrors.password = "Password is required!";
+    } else if (formData.password.length < 8) {
+      tempErrors.password = "Password must be at least 8 characters.";
+    }
+    if (formData.role.length === 0) tempErrors.role = "Please select at least one role!";
 
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -63,13 +59,12 @@ const SignUpPage = () => {
     const apiURL = "http://localhost:8080/api/auth/register";
 
     try {
-      // Check backend availability (optional)
+      // Optional pre-flight check
       const testResponse = await fetch(apiURL, { method: "OPTIONS" });
       if (!testResponse.ok) {
         throw new Error(`Server not reachable. Status: ${testResponse.status}`);
       }
 
-      // Send signup data
       const response = await fetch(apiURL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,10 +81,7 @@ const SignUpPage = () => {
         navigate("/login");
       } else {
         const errorData = await response.json();
-        console.error("Signup failed:", errorData);
-        alert(
-          `Error: ${errorData.message || "Signup failed. Please try again."}`
-        );
+        alert(`Error: ${errorData.message || "Signup failed. Please try again."}`);
       }
     } catch (error) {
       console.error("Error signing up:", error);
@@ -126,9 +118,7 @@ const SignUpPage = () => {
               onChange={handleInputChange}
               required
             />
-            {errors.username && (
-              <small className="error-text">{errors.username}</small>
-            )}
+            {errors.username && <small className="error-text">{errors.username}</small>}
           </div>
 
           <div className="input-group">
@@ -141,24 +131,35 @@ const SignUpPage = () => {
               onChange={handleInputChange}
               required
             />
-            {errors.email && (
-              <small className="error-text">{errors.email}</small>
-            )}
+            {errors.email && <small className="error-text">{errors.email}</small>}
           </div>
 
-          <div className="input-group">
+          {/* Password Field with Toggle */}
+          <div className="input-group" style={{ position: "relative" }}>
             <FaLock className="icon" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Password"
               value={formData.password}
               onChange={handleInputChange}
               required
             />
-            {errors.password && (
-              <small className="error-text">{errors.password}</small>
-            )}
+            <span
+              className="toggle-password"
+              onClick={() => setShowPassword((prev) => !prev)}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                color: "#666",
+              }}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
+            {errors.password && <small className="error-text">{errors.password}</small>}
           </div>
 
           <div className="input-group role-checkboxes">

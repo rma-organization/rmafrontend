@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -17,6 +15,7 @@ import {
 import { TableVirtuoso } from "react-virtuoso";
 import { useNavigate } from "react-router-dom";
 
+// Define table columns
 const columns = [
   { width: 25, label: "ID", dataKey: "id" },
   { width: 150, label: "Name", dataKey: "username" },
@@ -31,16 +30,13 @@ const ManageUser = () => {
   const itemsPerPage = 10;
   const navigate = useNavigate();
 
+  // Fetch all users on component mount
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await fetch("http://localhost:8080/api/auth/users");
-
-        const text = await response.text();
-        if (!text) throw new Error("Empty response from server");
-
-        const data = JSON.parse(text);
-        setUsers(Array.isArray(data) ? data : []);
+        const data = await response.json();
+        setUsers(data);
       } catch (error) {
         console.error("Error fetching users:", error.message);
         setUsers([]);
@@ -50,12 +46,15 @@ const ManageUser = () => {
     fetchUsers();
   }, []);
 
+  // Handle pagination change
   const handlePageChange = (_event, newPage) => {
     setPage(newPage);
   };
 
+  // Data slice for current page
   const paginatedData = users.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
+  // Virtualized table components
   const VirtuosoTableComponents = {
     Scroller: React.forwardRef((props, ref) => (
       <TableContainer component={Paper} {...props} ref={ref} />
@@ -68,6 +67,7 @@ const ManageUser = () => {
     TableBody: React.forwardRef((props, ref) => <TableBody {...props} ref={ref} />),
   };
 
+  // Fixed header for table
   const fixedHeaderContent = () => (
     <TableRow>
       {columns.map((column) => (
@@ -84,12 +84,13 @@ const ManageUser = () => {
     </TableRow>
   );
 
+  // Render each row's content
   const rowContent = (_index, row) => (
     <>
       {columns.map((column) => (
-        <TableCell key={column.dataKey} align="left">
+        <TableCell key={column.dataKey} align="left" style={{ wordBreak: "break-word" }}>
           {column.dataKey === "roles"
-            ? row[column.dataKey]?.join(", ")
+            ? Array.isArray(row[column.dataKey]) ? row[column.dataKey].join(", ") : row[column.dataKey]
             : row[column.dataKey] ?? "N/A"}
         </TableCell>
       ))}
@@ -107,14 +108,26 @@ const ManageUser = () => {
           Manage User
         </Typography>
 
-        <Paper style={{ height: 300, width: "100%", marginTop: 10 }}>
-          <TableVirtuoso
-            data={paginatedData}
-            components={VirtuosoTableComponents}
-            fixedHeaderContent={fixedHeaderContent}
-            itemContent={rowContent}
-          />
-
+        <Paper
+          sx={{
+            width: "100%",
+            minHeight: "60vh",
+            height: "100%",
+            marginTop: 2,
+            display: "flex",
+            flexDirection: "column",
+            overflowX: "auto",
+          }}
+        >
+          <Box sx={{ flex: 1, minHeight: 0 }}>
+            <TableVirtuoso
+              data={paginatedData}
+              components={VirtuosoTableComponents}
+              fixedHeaderContent={fixedHeaderContent}
+              itemContent={rowContent}
+              style={{ height: "100%", minHeight: "50vh" }}
+            />
+          </Box>
           <Box display="flex" justifyContent="flex-end" mt={2} p={2}>
             <Pagination
               count={Math.ceil(users.length / itemsPerPage)}
