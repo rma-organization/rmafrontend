@@ -17,6 +17,7 @@ import {
   Legend,
 } from "chart.js";
 import { listRequests } from "../../../services/api/InventoryServices";
+import jwtDecode from "jwt-decode"; // ✅ import jwt-decode
 
 ChartJS.register(
   CategoryScale,
@@ -28,6 +29,7 @@ ChartJS.register(
 );
 
 export default function EngineerHomePage() {
+  const [userName, setUserName] = useState("User"); // ✅ set userName from token
   const [chartData, setChartData] = useState({
     labels: ["First Week", "Second Week", "Third Week", "Fourth Week"],
     datasets: [
@@ -55,6 +57,20 @@ export default function EngineerHomePage() {
   });
 
   const [duration, setDuration] = useState("");
+
+  // ✅ decode token to get username
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        const name = decoded?.sub || decoded?.username || "User";
+        setUserName(name);
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -138,19 +154,10 @@ export default function EngineerHomePage() {
   }, []);
 
   return (
-    <Box sx={{ 
-      backgroundColor: "#E0E0E0", 
-      height: '100vh',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      py: 2,
-      px: 5
-    }}>
-      <Box>
-        <Typography variant="h5" fontWeight="bold" mb={2}>
-          Welcome Suranjan Nayanjith 👋
-        </Typography>
+    <Box sx={{ backgroundColor: "#E0E0E0", minHeight: "100vh", py: 3, px: 5 }}>
+      <Typography variant="h5" fontWeight="bold" mb={2}>
+        Welcome {userName} 👋
+      </Typography>
 
         <TextField
           variant="outlined"

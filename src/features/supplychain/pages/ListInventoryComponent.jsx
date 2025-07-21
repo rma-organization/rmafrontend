@@ -282,7 +282,7 @@ const ListRequestsComponent = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [page, setPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = 5;
 
   const navigate = useNavigate();
 
@@ -385,12 +385,12 @@ const ListRequestsComponent = () => {
         message={successMessage}
       />
 
-      <Box p={2} mt={10}>
+      <Box p={2} mt={1}>
         <Button variant="contained" component={Link} to="/supply-chain-home">
           Home
         </Button>
 
-        <Box bgcolor="lightgray" p={2} mt={10} borderRadius={1}>
+        <Box bgcolor="lightgray" p={2} mt={1} borderRadius={1}>
           <Typography variant="h6" fontWeight="bold" color="black" mt={4}>
             Requests List
           </Typography>

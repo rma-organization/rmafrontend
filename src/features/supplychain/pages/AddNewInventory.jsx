@@ -135,156 +135,189 @@ const AddNewInventory = () => {
   };
 
   return (
-    <Box p={1} mt={8}>
-      <Box bgcolor="lightgray" p={1} borderRadius={1}>
-        <Typography variant="h6" fontWeight="bold" color="black">
-          Add New Part
-        </Typography>
-
-        <Button variant="contained" disableElevation component={Link} to="/InventoryManagement">
-          Back
+    <>
+      <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+        <Button
+          variant="contained"
+          component={Link}
+          to="/supply-chain-home"
+          sx={{
+            minWidth: 120,
+            px: 3,
+          }}
+        >
+          Home
         </Button>
-
-        <Paper sx={{ padding: 3, mt: 2 }}>
-          <form onSubmit={handleSubmit}>
-            <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
-              {/* Left Column */}
-              <Box flex={1}>
-                {[
-                  { label: "Name", name: "name" },
-                  { label: "Box Part Number", name: "boxPartNumber" },
-                  { label: "In Box Part Number", name: "inBoxPartNumber" },
-                  { label: "Box Serial Number", name: "boxSerialNumber" },
-                  { label: "In Box Serial Number", name: "inBoxSerialNumber" },
-                  { label: "QTY", name: "quantity" },
-                  { label: "Inventory Location", name: "inventoryLocation" },
-                  { label: "MIT Reference Number", name: "mitNumber" },
-                  { label: "Item Type", name: "itemType" },
-                ].map((field, index) => (
-                  <Box key={index} display="flex" alignItems="center" mb={2}>
-                    <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
-                      {field.label}
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      name={field.name}
-                      value={formData[field.name] || ""}
-                      onChange={handleChange}
-                      error={!!fieldErrors[field.name]}
-                      helperText={fieldErrors[field.name] || ""}
-                    />
-                  </Box>
-                ))}
-              </Box>
-
-              {/* Right Column */}
-              <Box flex={1}>
-                {[
-                  { label: "PO Number", name: "poNumber" },
-                  { label: "LOT Number", name: "lotNumber" },
-                  { label: "Airway Bill Number", name: "airwaybillnumber" },
-                  { label: "Currency", name: "currency" },
-                  { label: "Amount", name: "amount" },
-                  { label: "Description", name: "description" },
-                ].map((field, index) => (
-                  <Box key={index} display="flex" alignItems="center" mb={2}>
-                    <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
-                      {field.label}
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      variant="outlined"
-                      name={field.name}
-                      value={formData[field.name] || ""}
-                      onChange={handleChange}
-                      multiline={field.name === "description"}
-                      rows={field.name === "description" ? 3 : 1}
-                    />
-                  </Box>
-                ))}
-
-                {/* Status Dropdown */}
-                <Box display="flex" alignItems="center" mb={2}>
-                  <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
-                    Status
-                  </Typography>
-                  <FormControl fullWidth variant="outlined">
-                    <Select
-                      name="status"
-                      value={formData.status || ""}
-                      onChange={handleChange}
-                      displayEmpty
-                    >
-                      <MenuItem value="" disabled>Select Status</MenuItem>
-                      <MenuItem value="Available">Available</MenuItem>
-                      <MenuItem value="Not Available">Not Available</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-
-                {/* Vendor Dropdown */}
-                <Box display="flex" alignItems="center" mb={2}>
-                  <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
-                    Vendor
-                  </Typography>
-                  <FormControl fullWidth variant="outlined" error={!!fieldErrors.vendorId}>
-                    <Select
-                      name="vendorId"
-                      value={formData.vendorId || ""}
-                      onChange={handleChange}
-                      displayEmpty
-                    >
-                      <MenuItem value="" disabled>Select Vendor</MenuItem>
-                      {vendors.map((vendor) => (
-                        <MenuItem key={vendor.id} value={vendor.id}>
-                          {vendor.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.vendorId && (
-                      <Typography variant="caption" color="error">
-                        {fieldErrors.vendorId}
-                      </Typography>
-                    )}
-                  </FormControl>
-                </Box>
-              </Box>
-            </Box>
-
-            {error && (
-              <Typography color="error" mt={2}>
-                {error}
-              </Typography>
-            )}
-
-            <Box mt={3}>
-              <Button
-                fullWidth
-                type="submit"
-                variant="contained"
-                sx={{ backgroundColor: "blue", color: "white" }}
-                disableElevation
-              >
-                Add Part
-              </Button>
-            </Box>
-          </form>
-        </Paper>
       </Box>
 
-      {/* Notification Snackbar */}
-      <Snackbar
-        open={notificationOpen}
-        autoHideDuration={3000}
-        onClose={handleNotificationClose}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      <Box
+        p={1}
+        mt={1}
+        sx={{
+          height: { xs: "calc(100vh - 56px)", md: "calc(100vh - 64px)" },
+          overflowY: "auto",
+        }}
       >
-        <Alert onClose={handleNotificationClose} severity="success" sx={{ width: "100%" }}>
-          Part added successfully!
-        </Alert>
-      </Snackbar>
-    </Box>
+        <Box bgcolor="lightgray" p={1} borderRadius={1}>
+          <Typography variant="h6" fontWeight="bold" color="black" mb={2}>
+            Add New Part
+          </Typography>
+
+          <Button
+            variant="contained"
+            disableElevation
+            component={Link}
+            to="/InventoryManagement"
+            sx={{ mb: 2 }}
+          >
+            Back
+          </Button>
+
+          <Paper sx={{ padding: 3 }}>
+            <form onSubmit={handleSubmit}>
+              <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
+                {/* Left Column */}
+                <Box flex={1}>
+                  {[
+                    { label: "Name", name: "name" },
+                    { label: "Box Part Number", name: "boxPartNumber" },
+                    { label: "In Box Part Number", name: "inBoxPartNumber" },
+                    { label: "Box Serial Number", name: "boxSerialNumber" },
+                    { label: "In Box Serial Number", name: "inBoxSerialNumber" },
+                    { label: "QTY", name: "quantity" },
+                    { label: "Inventory Location", name: "inventoryLocation" },
+                    { label: "MIT Reference Number", name: "mitNumber" },
+                    { label: "Item Type", name: "itemType" },
+                  ].map((field, index) => (
+                    <Box key={index} display="flex" alignItems="center" mb={2}>
+                      <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
+                        {field.label}
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        variant="outlined"
+                        name={field.name}
+                        value={formData[field.name] || ""}
+                        onChange={handleChange}
+                        error={!!fieldErrors[field.name]}
+                        helperText={fieldErrors[field.name] || ""}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Right Column */}
+                <Box flex={1}>
+                  {[
+                    { label: "PO Number", name: "poNumber" },
+                    { label: "LOT Number", name: "lotNumber" },
+                    { label: "Airway Bill Number", name: "airwaybillnumber" },
+                    { label: "Currency", name: "currency" },
+                    { label: "Amount", name: "amount" },
+                    { label: "Description", name: "description" },
+                  ].map((field, index) => (
+                    <Box key={index} display="flex" alignItems="center" mb={2}>
+                      <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
+                        {field.label}
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        variant="outlined"
+                        name={field.name}
+                        value={formData[field.name] || ""}
+                        onChange={handleChange}
+                        multiline={field.name === "description"}
+                        rows={field.name === "description" ? 3 : 1}
+                      />
+                    </Box>
+                  ))}
+
+                  {/* Status Dropdown */}
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
+                      Status
+                    </Typography>
+                    <FormControl fullWidth variant="outlined">
+                      <Select
+                        name="status"
+                        value={formData.status || ""}
+                        onChange={handleChange}
+                        displayEmpty
+                      >
+                        <MenuItem value="" disabled>
+                          Select Status
+                        </MenuItem>
+                        <MenuItem value="Available">Available</MenuItem>
+                        <MenuItem value="Not Available">Not Available</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+
+                  {/* Vendor Dropdown */}
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
+                      Vendor
+                    </Typography>
+                    <FormControl fullWidth variant="outlined" error={!!fieldErrors.vendorId}>
+                      <Select
+                        name="vendorId"
+                        value={formData.vendorId || ""}
+                        onChange={handleChange}
+                        displayEmpty
+                      >
+                        <MenuItem value="" disabled>
+                          Select Vendor
+                        </MenuItem>
+                        {vendors.map((vendor) => (
+                          <MenuItem key={vendor.id} value={vendor.id}>
+                            {vendor.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {fieldErrors.vendorId && (
+                        <Typography variant="caption" color="error">
+                          {fieldErrors.vendorId}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  </Box>
+                </Box>
+              </Box>
+
+              {error && (
+                <Typography color="error" mt={2}>
+                  {error}
+                </Typography>
+              )}
+
+              <Box mt={3}>
+                <Button
+                  fullWidth
+                  type="submit"
+                  variant="contained"
+                  sx={{ backgroundColor: "blue", color: "white" }}
+                  disableElevation
+                >
+                  Add Part
+                </Button>
+              </Box>
+            </form>
+          </Paper>
+        </Box>
+
+        {/* Notification Snackbar */}
+        <Snackbar
+          open={notificationOpen}
+          autoHideDuration={3000}
+          onClose={handleNotificationClose}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert onClose={handleNotificationClose} severity="success" sx={{ width: "100%" }}>
+            Part added successfully!
+          </Alert>
+        </Snackbar>
+      </Box>
+    </>
   );
 };
 
