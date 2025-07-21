@@ -15,7 +15,7 @@ import {
 
 const RequestPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get request ID for editing
+  const { id } = useParams();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,25 +33,41 @@ const RequestPage = () => {
     updatedAt: "",
   });
 
+  const [errors, setErrors] = useState({
+    name: false,
+    vendor: false,
+    customer: false,
+    srNumber: false,
+    fieldServiceTaskNumber: false,
+    faultPartNumber: false,
+    mailIds: false,
+    description: false,
+    partId: false,
+  });
+
   const [vendors, setVendors] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true); // To show loading indicator
-  const [error, setError] = useState(null); // To handle errors
+  const [partSuggestions, setPartSuggestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [partLoading, setPartLoading] = useState(false);
 
-  // Fetch vendors, customers, and existing request data if editing
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true); // Start loading state
-
+      setLoading(true);
       try {
         const [vendorRes, customerRes] = await Promise.all([
           fetch("http://localhost:8080/api/vendors"),
           fetch("http://localhost:8080/api/customers"),
         ]);
 
-        if (vendorRes.ok && customerRes.ok) {
-          const vendorData = await vendorRes.json();
-          const customerData = await customerRes.json();
+        if (!vendorRes.ok || !customerRes.ok) {
+          setError("Failed to load vendors or customers.");
+          return;
+        }
+
+        const vendorData = await vendorRes.json();
+        const customerData = await customerRes.json();
 
         setVendors(vendorData);
         setCustomers(customerData);
@@ -65,66 +81,151 @@ const RequestPage = () => {
         }
 
         if (id) {
-          const requestRes = await fetch(`http://localhost:8080/api/requests/${id}`);
-          if (requestRes.ok) {
-            const requestData = await requestRes.json();
-            setFormData(requestData);
+          const reqRes = await fetch(`http://localhost:8080/api/requests/${id}`);
+          if (reqRes.ok) {
+            const reqData = await reqRes.json();
+            setFormData({
+              ...reqData,
+              vendor: reqData.vendor?.id || "",
+              customer: reqData.customer?.id || "",
+              partId: reqData.partId || "",
+            });
           } else {
             setError("Failed to load request details.");
           }
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("An error occurred while fetching data.");
+      } catch (err) {
+        console.error(err);
+        setError("Error fetching data.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchInitialData();
-  }, [id, token]);
+    fetchData();
+  }, [id]);
 
-  // Handle input changes
+  const fetchPartSuggestions = async (term) => {
+    if (!term || term.length < 2) {
+      setPartSuggestions([]);
+      return;
+    }
+
+    setPartLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/inventory/search?query=${term}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setPartSuggestions(data);
+      } else {
+        const errorText = await res.text();
+        console.error("Error response from server:", res.status, errorText);
+        setPartSuggestions([]);
+      }
+    } catch (err) {
+      console.error("Part fetch error:", err);
+      setPartSuggestions([]);
+    } finally {
+      setPartLoading(false);
+    }
+  };
+
+  const validateField = (name, value) => {
+    switch (name) {
+      case "srNumber":
+      case "fieldServiceTaskNumber":
+      case "faultPartNumber":
+        return !/^[a-zA-Z0-9]*$/.test(value);
+      case "mailIds":
+        if (value) {
+          const emails = value.split(",").map((email) => email.trim());
+          return !emails.every((email) =>
+            /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
+          );
+        }
+        return false;
+      default:
+        return !value;
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const parsedValue = ["vendor", "customer", "requestedUserId"].includes(name)
-      ? Number(value)
-      : value;
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: validateField(name, value),
+    }));
 
     setFormData((prev) => ({
       ...prev,
-      [name]: parsedValue,
+      [name]: value,
     }));
   };
 
-  // Validate form data before submitting
+  const handlePartInputChange = (event, value) => {
+    fetchPartSuggestions(value);
+    setErrors((prev) => ({
+      ...prev,
+      partId: !value,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      partId: value,
+    }));
+  };
+
+  const handlePartSelect = (event, value) => {
+    const selectedPart =
+      typeof value === "string"
+        ? value
+        : value?.inBoxPartNumber || value?.boxPartNumber || "";
+
+    setErrors((prev) => ({
+      ...prev,
+      partId: !selectedPart,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      partId: selectedPart,
+    }));
+  };
+
   const validateForm = () => {
-    if (!formData.name.trim() || !formData.vendor || !formData.customer) {
-      return "Name, Vendor, and Customer are required.";
-    }
-    return null;
+    const newErrors = {
+      name: !formData.name,
+      vendor: !formData.vendor,
+      customer: !formData.customer,
+      srNumber: validateField("srNumber", formData.srNumber),
+      fieldServiceTaskNumber: validateField(
+        "fieldServiceTaskNumber",
+        formData.fieldServiceTaskNumber
+      ),
+      faultPartNumber: validateField("faultPartNumber", formData.faultPartNumber),
+      mailIds: validateField("mailIds", formData.mailIds),
+      description: !formData.description,
+      partId: !formData.partId,
+    };
+
+    setErrors(newErrors);
+
+    return Object.values(newErrors).some((error) => error);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const errorMessage = validateForm();
-    if (errorMessage) {
-      setError(errorMessage);
+    if (validateForm()) {
+      setError("Please correct the errors in the form before submitting.");
       return;
     }
 
-    setSubmitting(true);
-    setError(null);
-
     const payload = {
       ...formData,
-      vendor: {
-        id: formData.vendor ? parseInt(formData.vendor, 10) : null,
-      },
-      customer: {
-        id: formData.customer ? parseInt(formData.customer, 10) : null,
-      },
+      vendor: { id: parseInt(formData.vendor, 10) },
+      customer: { id: parseInt(formData.customer, 10) },
       requestedUserId: formData.requestedUserId
         ? parseInt(formData.requestedUserId, 10)
         : null,
@@ -132,33 +233,32 @@ const RequestPage = () => {
     };
 
     if (!id) {
-      requestBody.createdAt = new Date().toISOString();
+      payload.createdAt = new Date().toISOString();
     }
 
     try {
-      const url = id
-        ? `http://localhost:8080/api/requests/${id}`
-        : "http://localhost:8080/api/requests";
-      const method = id ? "PUT" : "POST";
+      const response = await fetch(
+        id
+          ? `http://localhost:8080/api/requests/${id}`
+          : "http://localhost:8080/api/requests",
+        {
+          method: id ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
-      const response = await fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (res.ok) {
+      if (response.ok) {
         alert("Request submitted successfully!");
         navigate(-1);
       } else {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);  // Log the full response
-        console.error("Errors:", errorData.errors);  // Log the specific errors from the server
-        alert("Failed to submit request");
+        const errData = await response.json();
+        console.error("Error submitting request:", errData);
+        alert("Failed to submit request.");
       }
-    } catch (error) {
-      console.error("Error submitting request:", error);
-      alert("An error occurred. Please try again.");
+    } catch (err) {
+      console.error("Submit error:", err);
+      alert("Error occurred. Try again.");
     }
   };
 
@@ -184,13 +284,7 @@ const RequestPage = () => {
           onClick={() => navigate(-1)}
           variant="contained"
           size="small"
-          sx={{
-            bgcolor: "#2715E6",
-            color: "#FFFFFF",
-            fontWeight: 500,
-            textTransform: "none",
-            "&:hover": { bgcolor: "#1F10C8" },
-          }}
+          sx={{ bgcolor: "#2715E6", "&:hover": { bgcolor: "#1F10C8" } }}
         >
           ← Back
         </Button>
@@ -200,26 +294,58 @@ const RequestPage = () => {
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
         </Box>
+      ) : error ? (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
       ) : (
         <form onSubmit={handleSubmit}>
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
-
           <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
             <Box sx={{ flex: 1 }}>
+              {/* All Left-Side Text Fields */}
+              {[
+                ["name", "Name"],
+                ["srNumber", "SR Number"],
+                ["fieldServiceTaskNumber", "Field Service Task Number"],
+                ["faultPartNumber", "Fault Part Number"],
+                ["mailIds", "Email ID (comma separated for multiple)"],
+              ].map(([name, label]) => (
+                <TextField
+                  key={name}
+                  fullWidth
+                  label={label}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleChange}
+                  size="small"
+                  required
+                  error={errors[name]}
+                  helperText={
+                    errors[name]
+                      ? name === "mailIds"
+                        ? "Please enter valid email addresses"
+                        : "Only alphanumeric characters allowed"
+                      : ""
+                  }
+                  sx={{ mb: 1.5 }}
+                />
+              ))}
+
               <TextField
                 fullWidth
-                label="Name"
-                name="name"
-                value={formData.name}
+                label="Description"
+                name="description"
+                value={formData.description}
                 onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
+                multiline
+                rows={3}
+                size="small"
                 required
+                error={errors.description}
+                helperText={errors.description ? "Description is required" : ""}
+                sx={{ mb: 1.5 }}
               />
+
               <TextField
                 select
                 fullWidth
@@ -227,7 +353,10 @@ const RequestPage = () => {
                 name="vendor"
                 value={formData.vendor}
                 onChange={handleChange}
-                variant="outlined"
+                size="small"
+                required
+                error={errors.vendor}
+                helperText={errors.vendor ? "Vendor is required" : ""}
                 sx={{ mb: 1.5 }}
               >
                 {vendors.map((v) => (
@@ -236,6 +365,7 @@ const RequestPage = () => {
                   </MenuItem>
                 ))}
               </TextField>
+
               <TextField
                 select
                 fullWidth
@@ -243,7 +373,10 @@ const RequestPage = () => {
                 name="customer"
                 value={formData.customer}
                 onChange={handleChange}
-                variant="outlined"
+                size="small"
+                required
+                error={errors.customer}
+                helperText={errors.customer ? "Customer is required" : ""}
                 sx={{ mb: 1.5 }}
               >
                 {customers.map((c) => (
@@ -252,52 +385,6 @@ const RequestPage = () => {
                   </MenuItem>
                 ))}
               </TextField>
-              <TextField
-                fullWidth
-                label="SR Number"
-                name="srNumber"
-                value={formData.srNumber}
-                onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
-              />
-              <TextField
-                fullWidth
-                label="Field Service Task Number"
-                name="fieldServiceTaskNumber"
-                value={formData.fieldServiceTaskNumber}
-                onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
-              />
-              <TextField
-                fullWidth
-                label="Fault Part Number"
-                name="faultPartNumber"
-                value={formData.faultPartNumber}
-                onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
-              />
-              <TextField
-                fullWidth
-                label="Email ID"
-                name="mailIds"
-                value={formData.mailIds}
-                onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
-              />
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                multiline
-                rows={2}
-                sx={{ mb: 1.5 }}
-              />
             </Box>
 
             <Divider
@@ -306,21 +393,51 @@ const RequestPage = () => {
               sx={{ mx: 1, backgroundColor: "#ccc" }}
             />
 
-            <Box sx={{ flex: 0.4 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Part Number"
-                name="partId"
-                value={formData.partId}
-                onChange={handleChange}
-                variant="outlined"
-                sx={{ mb: 1.5 }}
+            <Box sx={{ flex: 0.5 }}>
+              <Autocomplete
+                freeSolo
+                options={partSuggestions}
+                getOptionLabel={(option) =>
+                  typeof option === "string"
+                    ? option
+                    : option.inBoxPartNumber || option.boxPartNumber || option.name || ""
+                }
+                inputValue={formData.partId}
+                onInputChange={handlePartInputChange}
+                onChange={handlePartSelect}
+                loading={partLoading}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Part Number"
+                    size="small"
+                    variant="outlined"
+                    required
+                    error={errors.partId}
+                    helperText={errors.partId ? "Part number is required" : ""}
+                    sx={{ mb: 1.5 }}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {partLoading ? <CircularProgress size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    {option.inBoxPartNumber || option.boxPartNumber}
+                    {option.description && ` - ${option.description}`}
+                  </li>
+                )}
               />
             </Box>
           </Box>
 
-          <Button type="submit" variant="contained" sx={{ mt: 2, width: "100%" }}>
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
             {id ? "Update Request" : "Request Part"}
           </Button>
         </form>
