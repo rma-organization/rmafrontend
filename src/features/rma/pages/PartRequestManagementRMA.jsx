@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -17,7 +15,13 @@ import {
   Snackbar,
   CircularProgress,
   Pagination,
+  IconButton
 } from "@mui/material";
+import {
+  Visibility as VisibilityIcon,
+  Edit as EditIcon,
+  Save as SaveIcon
+} from "@mui/icons-material";
 import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -194,31 +198,31 @@ const PartRequestManagementRMA = () => {
                           </TableCell>
                           <TableCell>
                             {editRowId === row.id ? (
-                              <Button
-                                variant="contained"
+                              <IconButton
                                 color="success"
+                                aria-label="save"
                                 onClick={() => handleSave(row.id)}
                               >
-                                Save
-                              </Button>
+                                <SaveIcon />
+                              </IconButton>
                             ) : (
                               <Box display="flex" gap={1}>
                                 {row.status === "Faulty Returned" && (
-                                  <Button
-                                    variant="contained"
+                                  <IconButton
                                     color="warning"
+                                    aria-label="edit"
                                     onClick={() => handleEdit(row)}
                                   >
-                                    Edit
-                                  </Button>
+                                    <EditIcon />
+                                  </IconButton>
                                 )}
-                                <Button
-                                  variant="contained"
+                                <IconButton
                                   color="info"
+                                  aria-label="show"
                                   onClick={() => handleShow(row.id)}
                                 >
-                                  Show
-                                </Button>
+                                  <VisibilityIcon />
+                                </IconButton>
                               </Box>
                             )}
                           </TableCell>
