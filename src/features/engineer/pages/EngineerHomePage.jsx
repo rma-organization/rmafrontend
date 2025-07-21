@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -6,6 +6,8 @@ import {
   InputAdornment,
   CircularProgress,
   Alert,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Bar } from "react-chartjs-2";
@@ -19,6 +21,7 @@ import {
   Legend,
 } from "chart.js";
 import { listRequests } from "../../../services/api/InventoryServices";
+import { searchInventoryBySerial } from "../../../services/api/axios";
 import jwtDecode from "jwt-decode";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -50,18 +53,22 @@ export default function EngineerHomePage() {
       },
     ],
   });
-
   const [duration, setDuration] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const searchTimeoutRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        const name = decoded?.sub || decoded?.username || "User";
-        setUserName(name);
+        setUserName(decoded?.sub || decoded?.username || "User");
       } catch (err) {
         console.error("Error decoding token:", err);
       }
@@ -73,18 +80,13 @@ export default function EngineerHomePage() {
       setLoading(true);
       try {
         const data = await listRequests();
-
-        if (data.length === 0) {
-          setLoading(false);
-          return;
-        }
+        if (!data || data.length === 0) return setLoading(false);
 
         const earliestDate = new Date(
           Math.min(...data.map((req) => new Date(req.createdAt).getTime()))
         );
         const startDate = new Date(earliestDate);
         startDate.setHours(0, 0, 0, 0);
-
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + 28);
 
@@ -148,8 +150,8 @@ export default function EngineerHomePage() {
 
         setError("");
       } catch (err) {
-        setError("Failed to load data.");
         console.error("Error fetching requests:", err);
+        setError("Failed to load data.");
       } finally {
         setLoading(false);
       }
@@ -158,16 +160,58 @@ export default function EngineerHomePage() {
     fetchData();
   }, []);
 
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      if (value.trim().length > 0) {
+        try {
+          const results = await searchInventoryBySerial(value.trim());
+          setSearchResults(results);
+          if (inputRef.current) setMenuAnchorEl(inputRef.current);
+        } catch (err) {
+          console.error("Search failed:", err);
+          setSearchResults([]);
+          setMenuAnchorEl(null);
+        }
+      } else {
+        setSearchResults([]);
+        setMenuAnchorEl(null);
+      }
+    }, 300);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Box sx={{ backgroundColor: "#E0E0E0", minHeight: "100vh", py: 3, px: 5 }}>
       <Typography variant="h5" fontWeight="bold" mb={2}>
         Welcome {userName} 👋
       </Typography>
 
+      {/* Search Bar */}
       <TextField
         variant="outlined"
-        placeholder="Search..."
+        placeholder="Search In-box Serial Number"
         fullWidth
+        value={searchQuery}
+        onChange={handleSearchChange}
+        inputRef={inputRef}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -176,8 +220,43 @@ export default function EngineerHomePage() {
           ),
         }}
         sx={{ backgroundColor: "white", borderRadius: 2, mb: 2 }}
+        aria-controls={menuAnchorEl ? "search-menu" : undefined}
+        aria-haspopup="true"
+        aria-expanded={Boolean(menuAnchorEl) ? "true" : undefined}
       />
 
+      {/* Search Result Dropdown */}
+      <Menu
+        id="search-menu"
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl) && searchResults.length > 0}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        PaperProps={{
+          style: {
+            maxHeight: 300,
+            width: inputRef.current ? inputRef.current.clientWidth : 300,
+            borderRadius: 8,
+          },
+        }}
+      >
+        {searchResults.slice(0, 5).map((item) => (
+          <MenuItem key={item.id} onClick={handleMenuClose}>
+            <Box>
+              <Typography variant="body2" fontWeight="bold">
+                Serial: {item.inBoxSerialNumber}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Status: {item.status}
+              </Typography>
+              <Typography variant="body2">{item.name}</Typography>
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
+
+      {/* Chart Section */}
       {loading ? (
         <Box display="flex" justifyContent="center" mt={5}>
           <CircularProgress />
@@ -187,14 +266,7 @@ export default function EngineerHomePage() {
           {error}
         </Alert>
       ) : (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mt: 4,
-          }}
-        >
+        <Box display="flex" justifyContent="center" mt={4}>
           <Box display="flex" alignItems="center" sx={{ width: "100%" }}>
             <Box flex={3} sx={{ height: "60vh", width: "100%" }}>
               <Bar
@@ -214,7 +286,6 @@ export default function EngineerHomePage() {
                 }}
               />
             </Box>
-
             <Box flex={1} ml={4}>
               <Typography fontWeight="bold">Duration: {duration}</Typography>
               {["green", "red", "orange", "goldenrod"].map((color, i) => (

@@ -11,7 +11,7 @@ export const connect = (onMessageReceived) => {
   stompClient = new Client({
     webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
     connectHeaders: {
-      Authorization: `Bearer ${token}`,  // Pass JWT token for backend auth
+      Authorization: `Bearer ${token}`,  
     },
     reconnectDelay: 5000,
 

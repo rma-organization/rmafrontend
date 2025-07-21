@@ -1,5 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { Box, Typography, TextField, InputAdornment, useMediaQuery } from "@mui/material";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Box,
+  Typography,
+  TextField,
+  InputAdornment,
+  useMediaQuery,
+  Menu,
+  MenuItem,
+} from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Bar } from "react-chartjs-2";
 import {
@@ -13,6 +21,7 @@ import {
 } from "chart.js";
 
 import axiosInstance from "../../../services/api/axios";
+import { searchInventoryBySerial } from "../../../services/api/axios"; // Adjust path if needed
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -27,6 +36,13 @@ export default function RMAHomePage() {
 
   const [duration, setDuration] = useState("");
   const isMobile = useMediaQuery("(max-width:600px)");
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+  const searchTimeoutRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,7 +59,7 @@ export default function RMAHomePage() {
         startDate.setHours(0, 0, 0, 0);
 
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 28); // 4 weeks later
+        endDate.setDate(endDate.getDate() + 28);
 
         setDuration(`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`);
 
@@ -56,16 +72,8 @@ export default function RMAHomePage() {
           const requestDate = new Date(request.createdAt);
           const weekIndex = Math.floor((requestDate - startDate) / (7 * 24 * 60 * 60 * 1000));
           if (weekIndex >= 0 && weekIndex < 4) {
-            switch (request.status) {
-              case "Collected":
-                weeklyCounts.Collected[weekIndex]++;
-                break;
-              case "Completed":
-                weeklyCounts.Completed[weekIndex]++;
-                break;
-              default:
-                break;
-            }
+            if (request.status === "Collected") weeklyCounts.Collected[weekIndex]++;
+            else if (request.status === "Completed") weeklyCounts.Completed[weekIndex]++;
           }
         });
 
@@ -82,18 +90,56 @@ export default function RMAHomePage() {
     };
 
     fetchData();
-
-    const interval = setInterval(fetchData, 7 * 24 * 60 * 60 * 1000); // Update weekly
+    const interval = setInterval(fetchData, 7 * 24 * 60 * 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Handle debounced search
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      if (value.trim().length > 0) {
+        try {
+          const results = await searchInventoryBySerial(value.trim());
+          setSearchResults(results);
+          if (inputRef.current) setMenuAnchorEl(inputRef.current);
+        } catch (err) {
+          console.error("Search failed:", err);
+          setSearchResults([]);
+          setMenuAnchorEl(null);
+        }
+      } else {
+        setSearchResults([]);
+        setMenuAnchorEl(null);
+      }
+    }, 300);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, []);
 
   return (
     <Box sx={{ 
       backgroundColor: "#E0E0E0", 
-      height: "100vh", // Changed from minHeight to fixed height
+      height: "100vh",
       py: 3, 
       px: isMobile ? 2 : 5,
-      overflow: "hidden", // Changed from overflowX to overflow
+      overflow: "hidden",
       display: "flex",
       flexDirection: "column"
     }}>
@@ -104,8 +150,11 @@ export default function RMAHomePage() {
 
         <TextField
           variant="outlined"
-          placeholder="Search..."
+          placeholder="Search In-box Serial Number"
           fullWidth
+          value={searchQuery}
+          onChange={handleSearchChange}
+          inputRef={inputRef}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -118,7 +167,45 @@ export default function RMAHomePage() {
             borderRadius: 2, 
             mb: 2 
           }}
+          aria-controls={menuAnchorEl ? "search-results-menu" : undefined}
+          aria-haspopup="true"
+          aria-expanded={Boolean(menuAnchorEl) ? "true" : undefined}
         />
+
+        <Menu
+          id="search-results-menu"
+          anchorEl={menuAnchorEl}
+          open={Boolean(menuAnchorEl) && searchResults.length > 0}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          PaperProps={{
+            style: {
+              maxHeight: 300,
+              width: inputRef.current ? inputRef.current.clientWidth : 300,
+              borderRadius: 8,
+            },
+          }}
+        >
+          {searchResults.slice(0, 5).map((item) => (
+            <MenuItem
+              key={item.id}
+              onClick={() => {
+                handleMenuClose();
+              }}
+            >
+              <Box>
+                <Typography variant="body2" fontWeight="bold">
+                  Serial: {item.inBoxSerialNumber}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Status: {item.status}
+                </Typography>
+                <Typography variant="body2">{item.name}</Typography>
+              </Box>
+            </MenuItem>
+          ))}
+        </Menu>
       </Box>
 
       <Box 

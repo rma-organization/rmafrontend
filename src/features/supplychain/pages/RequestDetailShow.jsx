@@ -1,4 +1,3 @@
-// src/features/supplychain/pages/RequestDetailShow.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box,

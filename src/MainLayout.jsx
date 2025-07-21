@@ -1,4 +1,3 @@
-// MainLayout.jsx
 import React from "react";
 import { Box, useMediaQuery, Toolbar } from "@mui/material";
 import NavBar from "./components/navbar/NavBar";

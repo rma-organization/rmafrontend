@@ -6,7 +6,7 @@ const REQUESTS_BASE_URL = `${BASE_URL}/requests`;
 const VENDOR_BASE_URL = `${BASE_URL}/vendors`;
 const NOTIFICATION_BASE_URL = `${BASE_URL}/notifications`;
 
-// ========== INVENTORY ==========
+// INVENTORY
 export const listInventory = async () => {
   try {
     const [inventoryRes, vendorRes] = await Promise.all([
