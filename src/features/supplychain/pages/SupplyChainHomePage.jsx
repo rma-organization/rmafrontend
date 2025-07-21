@@ -25,11 +25,13 @@ import jwtDecode from "jwt-decode";
 const COLORS = ["#4CAF50", "#F44336", "#FFC107", "#2196F3"];
 
 const RequestStatusChart = () => {
+  // Declare userName state inside the component
+  const [userName, setUserName] = useState("User");
   const [searchQuery, setSearchQuery] = useState("");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("User");
 
+  // Decode token to get username on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -47,6 +49,7 @@ const RequestStatusChart = () => {
     setSearchQuery(e.target.value);
   };
 
+  // Fetch requests data and count statuses
   useEffect(() => {
     axiosInstance
       .get("/api/requests")
@@ -90,19 +93,23 @@ const RequestStatusChart = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        minHeight: "100vh",
+        overflow: "hidden",
       }}
     >
+      {/* Welcome box */}
       <Box
         sx={{
           bgcolor: "#ffffff",
           borderRadius: 3,
           boxShadow: 2,
-          height: "80px",
+          height: 80,
           width: "100%",
-          maxWidth: 500,
+          maxWidth: 1000,
           display: "flex",
           alignItems: "center",
           px: 3,
+          userSelect: "none",
         }}
       >
         <Typography variant="h5" fontWeight="600" color="primary">
@@ -111,6 +118,7 @@ const RequestStatusChart = () => {
         <WavingHandIcon sx={{ color: "#ffca28", ml: 2, fontSize: 30 }} />
       </Box>
 
+      {/* Search box */}
       <Box sx={{ mt: 4, width: "100%", maxWidth: 500 }}>
         <Paper
           component="form"
@@ -136,15 +144,37 @@ const RequestStatusChart = () => {
         </Paper>
       </Box>
 
-      <Box width="100%" maxWidth="500px" mt={5}>
+      {/* Pie Chart Card */}
+      <Box
+        width="100%"
+        maxWidth={500}
+        mt={5}
+        sx={{
+          overflow: "hidden",
+          maxHeight: 350,
+        }}
+      >
         <Card
           sx={{
             borderRadius: 3,
             boxShadow: 3,
             p: 3,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          <CardContent>
+          <CardContent
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              px: 0,
+              py: 1,
+            }}
+          >
             <Typography
               variant="h6"
               fontWeight="bold"
@@ -156,7 +186,11 @@ const RequestStatusChart = () => {
             {loading ? (
               <Typography textAlign="center">Loading...</Typography>
             ) : (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer
+                width="100%"
+                height={280} // fixed height to avoid scrolling issues
+                minWidth={300}
+              >
                 <PieChart>
                   <Pie
                     data={data}
@@ -184,10 +218,7 @@ const RequestStatusChart = () => {
                           (acc, entry) => acc + entry.value,
                           0
                         );
-                        const percentage = (
-                          (value / totalValue) *
-                          100
-                        ).toFixed(2);
+                        const percentage = ((value / totalValue) * 100).toFixed(2);
                         return (
                           <Box
                             sx={{
@@ -198,9 +229,7 @@ const RequestStatusChart = () => {
                             }}
                           >
                             <Typography fontWeight="bold">{name}</Typography>
-                            <Typography variant="body2">
-                              Value: {value}
-                            </Typography>
+                            <Typography variant="body2">Value: {value}</Typography>
                             <Typography variant="body2">
                               Percentage: {percentage}%
                             </Typography>
