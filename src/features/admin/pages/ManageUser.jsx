@@ -99,7 +99,7 @@ const ManageUser = () => {
 
   return (
     <Box p={2} mt={1}>
-      <Button variant="contained" disableElevation onClick={() => navigate("/")}>
+      <Button variant="contained" disableElevation onClick={() => navigate("/admin-home")}>
         Home
       </Button>
 

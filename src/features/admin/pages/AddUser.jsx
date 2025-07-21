@@ -80,7 +80,7 @@ const AddUser = () => {
 
   return (
     <Box p={2} mt={1}>
-      <Button variant="contained" disableElevation onClick={() => navigate("/")}>Home</Button>
+      <Button variant="contained" disableElevation onClick={() => navigate("/admin-home")}>Home</Button>
       <Card sx={{ maxWidth: "1100px", margin: "auto", mt: 4, padding: "20px", backgroundColor: "#f5f5f5" }}>
         <CardContent>
           {/* Header */}
