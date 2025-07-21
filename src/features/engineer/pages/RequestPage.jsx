@@ -33,18 +33,7 @@ const RequestPage = () => {
     updatedAt: "",
   });
 
-  const [errors, setErrors] = useState({
-    name: false,
-    vendor: false,
-    customer: false,
-    srNumber: false,
-    fieldServiceTaskNumber: false,
-    faultPartNumber: false,
-    mailIds: false,
-    description: false,
-    partId: false,
-  });
-
+  const [errors, setErrors] = useState({});
   const [vendors, setVendors] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [partSuggestions, setPartSuggestions] = useState([]);
@@ -153,12 +142,10 @@ const RequestPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setErrors((prev) => ({
       ...prev,
       [name]: validateField(name, value),
     }));
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -178,18 +165,17 @@ const RequestPage = () => {
   };
 
   const handlePartSelect = (event, value) => {
-    const selectedPart =
+    const selected =
       typeof value === "string"
         ? value
         : value?.inBoxPartNumber || value?.boxPartNumber || "";
-
-    setErrors((prev) => ({
-      ...prev,
-      partId: !selectedPart,
-    }));
     setFormData((prev) => ({
       ...prev,
-      partId: selectedPart,
+      partId: selected,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      partId: !selected,
     }));
   };
 
@@ -208,17 +194,15 @@ const RequestPage = () => {
       description: !formData.description,
       partId: !formData.partId,
     };
-
     setErrors(newErrors);
-
-    return Object.values(newErrors).some((error) => error);
+    return Object.values(newErrors).some((err) => err);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (validateForm()) {
-      setError("Please correct the errors in the form before submitting.");
+      setError("Please correct the errors in the form.");
       return;
     }
 
@@ -232,18 +216,21 @@ const RequestPage = () => {
       updatedAt: new Date().toISOString(),
     };
 
-    if (!id) {
-      payload.createdAt = new Date().toISOString();
-    }
+    if (!id) payload.createdAt = new Date().toISOString();
 
     try {
+      const token = localStorage.getItem("token"); // ✅ get the token
+
       const response = await fetch(
         id
           ? `http://localhost:8080/api/requests/${id}`
           : "http://localhost:8080/api/requests",
         {
           method: id ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`, // ✅ attach token
+          },
           body: JSON.stringify(payload),
         }
       );
@@ -252,40 +239,30 @@ const RequestPage = () => {
         alert("Request submitted successfully!");
         navigate(-1);
       } else {
-        const errData = await response.json();
-        console.error("Error submitting request:", errData);
+        const errText = await response.text();
+        console.error("Error:", errText);
         alert("Failed to submit request.");
       }
     } catch (err) {
       console.error("Submit error:", err);
-      alert("Error occurred. Try again.");
+      alert("Network error.");
     }
   };
 
   return (
-    <Container
-      maxWidth="md"
-      sx={{ mt: 3, p: 2, bgcolor: "#FFFBFB", borderRadius: 2, boxShadow: 2 }}
-    >
+    <Container maxWidth="md" sx={{ mt: 3, p: 2, bgcolor: "#fff", borderRadius: 2 }}>
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           p: 2,
-          bgcolor: "#ECE7E7",
+          bgcolor: "#ECECEC",
           borderRadius: 1,
         }}
       >
-        <Typography variant="h6">
-          {id ? "Edit Request" : "Add New Request"}
-        </Typography>
-        <Button
-          onClick={() => navigate(-1)}
-          variant="contained"
-          size="small"
-          sx={{ bgcolor: "#2715E6", "&:hover": { bgcolor: "#1F10C8" } }}
-        >
+        <Typography variant="h6">{id ? "Edit Request" : "Add New Request"}</Typography>
+        <Button variant="contained" onClick={() => navigate(-1)}>
           ← Back
         </Button>
       </Box>
@@ -302,31 +279,29 @@ const RequestPage = () => {
         <form onSubmit={handleSubmit}>
           <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
             <Box sx={{ flex: 1 }}>
-              {/* All Left-Side Text Fields */}
               {[
                 ["name", "Name"],
                 ["srNumber", "SR Number"],
                 ["fieldServiceTaskNumber", "Field Service Task Number"],
                 ["faultPartNumber", "Fault Part Number"],
-                ["mailIds", "Email ID (comma separated for multiple)"],
+                ["mailIds", "Email IDs (comma separated)"],
               ].map(([name, label]) => (
                 <TextField
                   key={name}
                   fullWidth
-                  label={label}
                   name={name}
+                  label={label}
                   value={formData[name]}
                   onChange={handleChange}
-                  size="small"
-                  required
                   error={errors[name]}
                   helperText={
                     errors[name]
                       ? name === "mailIds"
-                        ? "Please enter valid email addresses"
-                        : "Only alphanumeric characters allowed"
+                        ? "Invalid email format"
+                        : "Invalid value"
                       : ""
                   }
+                  size="small"
                   sx={{ mb: 1.5 }}
                 />
               ))}
@@ -335,14 +310,13 @@ const RequestPage = () => {
                 fullWidth
                 label="Description"
                 name="description"
-                value={formData.description}
-                onChange={handleChange}
                 multiline
                 rows={3}
-                size="small"
-                required
+                value={formData.description}
+                onChange={handleChange}
                 error={errors.description}
-                helperText={errors.description ? "Description is required" : ""}
+                helperText={errors.description ? "Required" : ""}
+                size="small"
                 sx={{ mb: 1.5 }}
               />
 
@@ -353,10 +327,9 @@ const RequestPage = () => {
                 name="vendor"
                 value={formData.vendor}
                 onChange={handleChange}
-                size="small"
-                required
                 error={errors.vendor}
-                helperText={errors.vendor ? "Vendor is required" : ""}
+                helperText={errors.vendor ? "Required" : ""}
+                size="small"
                 sx={{ mb: 1.5 }}
               >
                 {vendors.map((v) => (
@@ -373,10 +346,9 @@ const RequestPage = () => {
                 name="customer"
                 value={formData.customer}
                 onChange={handleChange}
-                size="small"
-                required
                 error={errors.customer}
-                helperText={errors.customer ? "Customer is required" : ""}
+                helperText={errors.customer ? "Required" : ""}
+                size="small"
                 sx={{ mb: 1.5 }}
               >
                 {customers.map((c) => (
@@ -387,20 +359,16 @@ const RequestPage = () => {
               </TextField>
             </Box>
 
-            <Divider
-              flexItem
-              orientation="vertical"
-              sx={{ mx: 1, backgroundColor: "#ccc" }}
-            />
+            <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
 
-            <Box sx={{ flex: 0.5 }}>
+            <Box sx={{ flex: 0.6 }}>
               <Autocomplete
                 freeSolo
                 options={partSuggestions}
-                getOptionLabel={(option) =>
-                  typeof option === "string"
-                    ? option
-                    : option.inBoxPartNumber || option.boxPartNumber || option.name || ""
+                getOptionLabel={(opt) =>
+                  typeof opt === "string"
+                    ? opt
+                    : opt.inBoxPartNumber || opt.boxPartNumber || ""
                 }
                 inputValue={formData.partId}
                 onInputChange={handlePartInputChange}
@@ -410,11 +378,9 @@ const RequestPage = () => {
                   <TextField
                     {...params}
                     label="Part Number"
-                    size="small"
-                    variant="outlined"
-                    required
                     error={errors.partId}
-                    helperText={errors.partId ? "Part number is required" : ""}
+                    helperText={errors.partId ? "Required" : ""}
+                    size="small"
                     sx={{ mb: 1.5 }}
                     InputProps={{
                       ...params.InputProps,
@@ -430,7 +396,6 @@ const RequestPage = () => {
                 renderOption={(props, option) => (
                   <li {...props} key={option.id}>
                     {option.inBoxPartNumber || option.boxPartNumber}
-                    {option.description && ` - ${option.description}`}
                   </li>
                 )}
               />
@@ -438,7 +403,7 @@ const RequestPage = () => {
           </Box>
 
           <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
-            {id ? "Update Request" : "Request Part"}
+            {id ? "Update Request" : "Submit Request"}
           </Button>
         </form>
       )}

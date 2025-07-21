@@ -12,6 +12,8 @@ import {
   Legend,
 } from "chart.js";
 
+import axiosInstance from "../../../services/api/axios"; // adjust the path accordingly
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function RMAHomePage() {
@@ -28,24 +30,26 @@ export default function RMAHomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/requests");
-        const data = await response.json();
+        // Use axiosInstance instead of fetch so token is included
+        const response = await axiosInstance.get("/api/requests");
+        const data = response.data;
 
         if (data.length === 0) return;
 
-        const earliestDate = new Date(Math.min(...data.map((request) => new Date(request.createdAt).getTime())));
+        const earliestDate = new Date(
+          Math.min(...data.map((request) => new Date(request.createdAt).getTime()))
+        );
         const startDate = new Date(earliestDate);
         startDate.setHours(0, 0, 0, 0);
 
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + 28); // 4 weeks later
 
-        // ✅ FIXED: Use template literals properly
         setDuration(`${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`);
 
         const weeklyCounts = {
-          "Collected": [0, 0, 0, 0],
-          "Completed": [0, 0, 0, 0],
+          Collected: [0, 0, 0, 0],
+          Completed: [0, 0, 0, 0],
         };
 
         data.forEach((request) => {
