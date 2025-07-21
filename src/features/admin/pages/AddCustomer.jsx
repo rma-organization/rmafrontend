@@ -12,15 +12,15 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 
 const AddCustomer = () => {
-  const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
   const [formData, setFormData] = useState({ name: "" });
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [deletingVendorId, setDeletingVendorId] = useState(null);
@@ -45,10 +45,11 @@ const AddCustomer = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
+    setSuccessMessage("");
     setLoading(true);
 
     if (!formData.name.trim()) {
-      setError("Vendor name is required.");
+      setError("Customer name is required.");
       setLoading(false);
       return;
     }
@@ -59,9 +60,9 @@ const AddCustomer = () => {
       });
       setVendors((prev) => [...prev, response.data]);
       setFormData({ name: "" });
-      navigate("/SuccessfullyAddVendor");
+      setSuccessMessage("Customer added successfully!");
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to add customers. Please try again.");
+      setError(error.response?.data?.message || "Failed to add customer. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -69,11 +70,14 @@ const AddCustomer = () => {
 
   const handleDelete = async (customerId) => {
     setDeletingVendorId(customerId);
+    setError(null);
+    setSuccessMessage("");
     try {
       await axios.delete(`${apiUrl}/api/customers/${customerId}`);
       setVendors((prevVendors) => prevVendors.filter((customer) => customer.id !== customerId));
+      setSuccessMessage("Customer deleted successfully!");
     } catch (error) {
-      setError(error.response?.data || "Failed to delete vendor. Please try again.");
+      setError(error.response?.data || "Failed to delete customer. Please try again.");
     } finally {
       setDeletingVendorId(null);
     }
@@ -82,17 +86,17 @@ const AddCustomer = () => {
   return (
     <Box p={2} mt={8}>
       <Box bgcolor="lightgray" p={2} borderRadius={1}>
-        <Typography variant="h6" fontWeight="bold" color="black">
+        <Typography variant="h6" fontWeight="bold" color="black" mb={2}>
           Add Customer
         </Typography>
 
-        <Button variant="contained" disableElevation component={Link} to="/ListInventoryComponent">
+        <Button variant="contained" disableElevation component={Link} to="/ListInventoryComponent" sx={{ mb: 2 }}>
           Back
         </Button>
 
-        <Paper sx={{ padding: 3, mt: 2 }}>
+        <Paper sx={{ padding: 3 }}>
           <form onSubmit={handleSubmit}>
-            <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
+            <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4} alignItems="center">
               <Box flex={1}>
                 <Box display="flex" alignItems="center" mb={2}>
                   <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
@@ -104,8 +108,21 @@ const AddCustomer = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
+                    disabled={loading}
                   />
                 </Box>
+              </Box>
+
+              <Box>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{ backgroundColor: "blue", color: "white" }}
+                  disableElevation
+                  disabled={loading}
+                >
+                  {loading ? "Adding Customer..." : "Add Customer"}
+                </Button>
               </Box>
             </Box>
 
@@ -115,18 +132,11 @@ const AddCustomer = () => {
               </Typography>
             )}
 
-            <Box mt={3}>
-              <Button
-                fullWidth
-                type="submit"
-                variant="contained"
-                sx={{ backgroundColor: "blue", color: "white" }}
-                disableElevation
-                disabled={loading}
-              >
-                {loading ? "Adding Customer..." : "Add Customer"}
-              </Button>
-            </Box>
+            {successMessage && (
+              <Typography color="success.main" mt={2}>
+                {successMessage}
+              </Typography>
+            )}
           </form>
         </Paper>
 
@@ -136,7 +146,7 @@ const AddCustomer = () => {
           </Typography>
 
           <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: "auto" }}>
-            <Table sx={{ minWidth: 650 }} aria-label="customer table">
+            <Table sx={{ minWidth: 650 }} aria-label="customer table" stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>Id</TableCell>
@@ -163,6 +173,13 @@ const AddCustomer = () => {
                     </TableCell>
                   </TableRow>
                 ))}
+                {vendors.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      No customers found.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>
