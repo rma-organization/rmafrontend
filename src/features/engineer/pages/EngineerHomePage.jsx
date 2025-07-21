@@ -159,49 +159,56 @@ export default function EngineerHomePage() {
         Welcome {userName} 👋
       </Typography>
 
-      <TextField
-        variant="outlined"
-        placeholder="Search..."
-        fullWidth
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <SearchIcon />
-            </InputAdornment>
-          ),
-        }}
-        sx={{ backgroundColor: "white", borderRadius: 2, mb: 2 }}
-      />
+        <TextField
+          variant="outlined"
+          placeholder="Search..."
+          fullWidth
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ backgroundColor: "white", borderRadius: 2, mb: 2 }}
+        />
+      </Box>
 
-      <Box sx={{ mt: 10 }} />
-
-      <Box display="flex" alignItems="center">
-        <Box flex={3} sx={{ width: "90%", height: "350px" }}>
-          <Bar
-            data={chartData}
-            options={{
-              responsive: true,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  max: 5,
-                  ticks: {
-                    stepSize: 1,
+      <Box sx={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <Box display="flex" alignItems="center" sx={{ width: '100%' }}>
+          <Box flex={3} sx={{ height: "60vh" }}>
+            <Bar
+              data={chartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    max: 5,
+                    ticks: {
+                      stepSize: 1,
+                    },
                   },
                 },
-              },
-            }}
-          />
-        </Box>
+              }}
+            />
+          </Box>
 
-        <Box flex={1} ml={4}>
-          <Typography fontWeight="bold">Duration: {duration}</Typography>
-          {["green", "red", "orange", "goldenrod"].map((color, i) => (
-            <Box key={color} display="flex" alignItems="center" mt={1}>
-              <Box width={12} height={12} bgcolor={color} mr={1} />
-              {["Approved Requests", "Declined Requests", "Pending Requests", "Faulty Returned"][i]}
-            </Box>
-          ))}
+          <Box flex={1} ml={4}>
+            <Typography fontWeight="bold">Duration: {duration}</Typography>
+            {["green", "red", "orange", "goldenrod"].map((color, i) => (
+              <Box key={color} display="flex" alignItems="center" mt={1}>
+                <Box width={12} height={12} bgcolor={color} mr={1} />
+                {["Approved Requests", "Declined Requests", "Pending Requests", "Faulty Returned"][i]}
+              </Box>
+            ))}
+          </Box>
         </Box>
       </Box>
     </Box>

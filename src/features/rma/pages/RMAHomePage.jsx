@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, TextField, InputAdornment } from "@mui/material";
+import { Box, Typography, TextField, InputAdornment, useMediaQuery } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { Bar } from "react-chartjs-2";
 import {
@@ -12,7 +12,7 @@ import {
   Legend,
 } from "chart.js";
 
-import axiosInstance from "../../../services/api/axios"; // adjust the path accordingly
+import axiosInstance from "../../../services/api/axios";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -26,11 +26,11 @@ export default function RMAHomePage() {
   });
 
   const [duration, setDuration] = useState("");
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Use axiosInstance instead of fetch so token is included
         const response = await axiosInstance.get("/api/requests");
         const data = response.data;
 
@@ -88,33 +88,60 @@ export default function RMAHomePage() {
   }, []);
 
   return (
-    <Box sx={{ backgroundColor: "#E0E0E0", minHeight: "100vh", py: 3, px: 5 }}>
-      <Typography variant="h5" fontWeight="bold" mb={2}>
-        Welcome RMA Manager 👋
-      </Typography>
+    <Box sx={{ 
+      backgroundColor: "#E0E0E0", 
+      height: "100vh", // Changed from minHeight to fixed height
+      py: 3, 
+      px: isMobile ? 2 : 5,
+      overflow: "hidden", // Changed from overflowX to overflow
+      display: "flex",
+      flexDirection: "column"
+    }}>
+      <Box sx={{ flex: "0 0 auto" }}>
+        <Typography variant="h5" fontWeight="bold" mb={2}>
+          Welcome RMA Manager 👋
+        </Typography>
 
-      <TextField
-        variant="outlined"
-        placeholder="Search..."
-        fullWidth
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <SearchIcon />
-            </InputAdornment>
-          ),
+        <TextField
+          variant="outlined"
+          placeholder="Search..."
+          fullWidth
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ 
+            backgroundColor: "white", 
+            borderRadius: 2, 
+            mb: 2 
+          }}
+        />
+      </Box>
+
+      <Box 
+        sx={{ 
+          flex: "1 1 auto",
+          display: "flex", 
+          flexDirection: isMobile ? "column" : "row", 
+          alignItems: "center",
+          gap: 2,
+          overflow: "hidden"
         }}
-        sx={{ backgroundColor: "white", borderRadius: 2, mb: 2 }}
-      />
-
-      <Box sx={{ mt: 10 }} />
-
-      <Box display="flex" alignItems="center">
-        <Box flex={3} sx={{ width: "90%", height: "350px" }}>
+      >
+        <Box sx={{ 
+          width: isMobile ? "100%" : "70%", 
+          height: isMobile ? "60%" : "90%",
+          minHeight: "250px",
+          overflow: "hidden"
+        }}>
           <Bar
             data={chartData}
             options={{
               responsive: true,
+              maintainAspectRatio: false,
               scales: {
                 y: {
                   beginAtZero: true,
@@ -124,11 +151,21 @@ export default function RMAHomePage() {
                   },
                 },
               },
+              plugins: {
+                legend: {
+                  position: isMobile ? "bottom" : "top",
+                }
+              }
             }}
           />
         </Box>
 
-        <Box flex={1} ml={4}>
+        <Box sx={{ 
+          width: isMobile ? "100%" : "30%",
+          pl: isMobile ? 0 : 4,
+          pt: isMobile ? 2 : 0,
+          overflow: "hidden"
+        }}>
           <Typography fontWeight="bold">Duration: {duration}</Typography>
           {["#D7B943", "#008080"].map((color, i) => (
             <Box key={color} display="flex" alignItems="center" mt={1}>
