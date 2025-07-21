@@ -18,7 +18,10 @@ import {
   Menu as MenuIcon,
   AccountCircle,
 } from "@mui/icons-material";
+import { formatDistanceToNow } from "date-fns";
 import ChatDrawer from "./ChatDrawer";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 export default function NavBar() {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -26,9 +29,12 @@ export default function NavBar() {
   const [username, setUsername] = useState("");
   const [anchorEl, setAnchorEl] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width:900px)");
 
+  // Authentication and user info
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUsername = localStorage.getItem("username");
@@ -42,6 +48,55 @@ export default function NavBar() {
     if (storedUsername) setUsername(storedUsername);
     if (storedRole) setRole(storedRole);
   }, [navigate]);
+
+  // Notification fetching and STOMP setup
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || !role) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/notifications/role", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+      }
+    };
+
+    fetchNotifications();
+
+    const stompClient = new Client({
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      connectHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+      reconnectDelay: 5000,
+      onConnect: () => {
+        stompClient.subscribe(`/topic/notifications/${role.toLowerCase()}`, (message) => {
+          const newNotification = JSON.parse(message.body);
+          setNotifications((prev) => [newNotification, ...prev]);
+        });
+      },
+    });
+
+    stompClient.activate();
+
+    return () => {
+      stompClient.deactivate();
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -62,6 +117,14 @@ export default function NavBar() {
     setChatOpen((prev) => !prev);
   };
 
+  const handleNotificationOpen = (event) => {
+    setNotificationAnchorEl(event.currentTarget);
+  };
+
+  const handleNotificationClose = () => {
+    setNotificationAnchorEl(null);
+  };
+
   return (
     <>
       <AppBar
@@ -76,7 +139,6 @@ export default function NavBar() {
         }}
       >
         <Toolbar sx={{ display: "flex" }}>
-          {/* Menu icon for mobile sidebar toggle */}
           {isMobile && (
             <IconButton
               color="inherit"
@@ -90,7 +152,6 @@ export default function NavBar() {
             </IconButton>
           )}
 
-          {/* Right icons container pushed to the right */}
           <Box
             display="flex"
             alignItems="center"
@@ -100,9 +161,11 @@ export default function NavBar() {
             <IconButton
               color="inherit"
               aria-label="notifications"
-              onClick={() => navigate("/notifications")}
+              onClick={handleNotificationOpen}
             >
-              <NotificationsIcon />
+              <Badge badgeContent={notifications.length} color="error">
+                <NotificationsIcon />
+              </Badge>
             </IconButton>
 
             <IconButton color="inherit" onClick={toggleChatDrawer}>
@@ -155,6 +218,57 @@ export default function NavBar() {
           <Typography variant="body1" color="error">
             Logout
           </Typography>
+        </MenuItem>
+      </Menu>
+
+      {/* Notification Menu */}
+      <Menu
+        anchorEl={notificationAnchorEl}
+        open={Boolean(notificationAnchorEl)}
+        onClose={handleNotificationClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        sx={{
+          "& .MuiPaper-root": {
+            minWidth: 300,
+            maxHeight: 400,
+            overflowY: "auto",
+            borderRadius: "8px",
+          },
+        }}
+      >
+        <Box sx={{ px: 2, py: 1, borderBottom: "1px solid #eee" }}>
+          <Typography variant="subtitle1" fontWeight="bold">
+            Notifications
+          </Typography>
+        </Box>
+
+        {notifications.length === 0 ? (
+          <MenuItem disabled>No new notifications</MenuItem>
+        ) : (
+          notifications.slice(0, 5).map((notif, index) => (
+            <MenuItem key={index} onClick={handleNotificationClose}>
+              <Box>
+                <Typography variant="body2" fontWeight="bold">
+                  {notif.type || "New Notification"}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {formatDistanceToNow(new Date(notif.timestamp), { addSuffix: true })}
+                </Typography>
+                <Typography variant="body2">{notif.message}</Typography>
+              </Box>
+            </MenuItem>
+          ))
+        )}
+
+        <MenuItem
+          onClick={() => {
+            handleNotificationClose();
+            navigate("/notifications");
+          }}
+          sx={{ justifyContent: "center", fontWeight: "bold", color: "primary.main" }}
+        >
+          See all
         </MenuItem>
       </Menu>
 

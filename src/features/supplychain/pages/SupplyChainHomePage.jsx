@@ -251,9 +251,7 @@
 // };
 
 // export default RequestStatusChart;
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   PieChart,
   Pie,
@@ -272,11 +270,14 @@ import {
   Card,
   CardContent,
   useMediaQuery,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import WavingHandIcon from "@mui/icons-material/WavingHand";
 import SearchIcon from "@mui/icons-material/Search";
 import axiosInstance from "../../../services/api/axios";
 import jwtDecode from "jwt-decode";
+import { searchInventoryBySerial } from "../../../services/api/axios"; // Ensure path correct
 
 const COLORS = ["#4CAF50", "#F44336", "#FFC107", "#2196F3"];
 
@@ -285,8 +286,13 @@ const RequestStatusChart = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchResults, setSearchResults] = useState([]);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const isMobile = useMediaQuery("(max-width:600px)");
+  const searchTimeoutRef = useRef(null);
+  const inputRef = useRef(null);
 
+  // Decode JWT for greeting
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -300,10 +306,49 @@ const RequestStatusChart = () => {
     }
   }, []);
 
+  // Handle search input with debounce
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      if (value.trim().length > 0) {
+        try {
+          const results = await searchInventoryBySerial(value.trim());
+          setSearchResults(results);
+          if (inputRef.current) {
+            setMenuAnchorEl(inputRef.current);
+          }
+        } catch (err) {
+          console.error("Search failed:", err);
+          setSearchResults([]);
+          setMenuAnchorEl(null);
+        }
+      } else {
+        setSearchResults([]);
+        setMenuAnchorEl(null);
+      }
+    }, 300);
   };
 
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  // Clear debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Fetch status counts
   useEffect(() => {
     axiosInstance
       .get("/api/requests")
@@ -349,7 +394,7 @@ const RequestStatusChart = () => {
         p: isMobile ? 2 : 4,
       }}
     >
-      {/* Welcome box */}
+      {/* Welcome Box */}
       <Box
         sx={{
           bgcolor: "#ffffff",
@@ -371,7 +416,7 @@ const RequestStatusChart = () => {
         <WavingHandIcon sx={{ color: "#ffca28", ml: 2, fontSize: 30 }} />
       </Box>
 
-      {/* Search box */}
+      {/* Search Box */}
       <Box sx={{ width: "100%", maxWidth: 500, mb: isMobile ? 2 : 4 }}>
         <Paper
           component="form"
@@ -382,22 +427,64 @@ const RequestStatusChart = () => {
             borderRadius: 3,
             boxShadow: 1,
           }}
+          onSubmit={(e) => e.preventDefault()}
         >
           <InputBase
             sx={{ ml: 1, flex: 1 }}
-            placeholder="Search Requests"
-            inputProps={{ "aria-label": "search requests" }}
+            placeholder="Search In-box Serial Number"
+            inputProps={{ "aria-label": "search serial number" }}
             value={searchQuery}
             onChange={handleSearchChange}
+            inputRef={inputRef}
+            aria-controls={menuAnchorEl ? "search-results-menu" : undefined}
+            aria-haspopup="true"
+            aria-expanded={Boolean(menuAnchorEl) ? "true" : undefined}
           />
           <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
           <IconButton type="button" sx={{ p: "10px" }} aria-label="search">
             <SearchIcon />
           </IconButton>
         </Paper>
+
+        {/* Search Results Menu */}
+        <Menu
+          id="search-results-menu"
+          anchorEl={menuAnchorEl}
+          open={Boolean(menuAnchorEl) && searchResults.length > 0}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          PaperProps={{
+            style: {
+              maxHeight: 300,
+              width: inputRef.current ? inputRef.current.clientWidth : 300,
+              borderRadius: 8,
+            },
+          }}
+        >
+          {searchResults.slice(0, 5).map((item) => (
+            <MenuItem
+              key={item.id}
+              onClick={() => {
+                // You can add more behavior here on click
+                handleMenuClose();
+              }}
+            >
+              <Box>
+                <Typography variant="body2" fontWeight="bold">
+                  Serial: {item.inBoxSerialNumber}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Status: {item.status}
+                </Typography>
+                <Typography variant="body2">{item.name}</Typography>
+              </Box>
+            </MenuItem>
+          ))}
+        </Menu>
       </Box>
 
-      {/* Pie Chart Card */}
+      {/* Pie Chart */}
       <Box
         sx={{
           width: "100%",
@@ -442,12 +529,14 @@ const RequestStatusChart = () => {
             {loading ? (
               <Typography textAlign="center">Loading...</Typography>
             ) : (
-              <Box sx={{ 
-                width: "100%", 
-                height: "100%", 
-                minHeight: 250,
-                maxHeight: 350 
-              }}>
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  minHeight: 250,
+                  maxHeight: 350,
+                }}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -497,11 +586,11 @@ const RequestStatusChart = () => {
                         return null;
                       }}
                     />
-                    <Legend 
-                      verticalAlign="bottom" 
+                    <Legend
+                      verticalAlign="bottom"
                       height={36}
                       wrapperStyle={{
-                        paddingTop: isMobile ? 10 : 20
+                        paddingTop: isMobile ? 10 : 20,
                       }}
                     />
                   </PieChart>
@@ -516,3 +605,5 @@ const RequestStatusChart = () => {
 };
 
 export default RequestStatusChart;
+
+
