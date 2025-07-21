@@ -5,6 +5,7 @@ import {
   Card, CardContent, Grid, TextField, Box,
   MenuItem, Select
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 // Optional role mapping for display (you can use it if you want)
 const roleMapping = {
@@ -21,6 +22,8 @@ const AddUser = () => {
   // Form state for selected username and status
   const [username, setUsername] = useState("");
   const [status, setStatus] = useState("PENDING");
+
+  const navigate = useNavigate();
 
   // Fetch users on component mount
   useEffect(() => {
@@ -76,78 +79,77 @@ const AddUser = () => {
   };
 
   return (
-    <Card sx={{ maxWidth: "1100px", margin: "auto", mt: 4, padding: "20px", backgroundColor: "#f5f5f5" }}>
-      <CardContent>
-        {/* Header */}
-        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <Typography variant="h6">Approve User</Typography>
-        </Box>
-
-        {/* User input form */}
-        <Grid container spacing={3}>
-          <Grid item xs={6}>
-            <TextField
-              label="User Name"
-              fullWidth
-              variant="outlined"
-              value={username}
-              onChange={handleUsernameChange}
-              sx={{ mb: 2 }}
-            />
-            <Select
-              fullWidth
-              value={status}
-              onChange={handleStatusChange}
-              variant="outlined"
-              sx={{ mb: 2 }}
-            >
-              <MenuItem value="APPROVED">APPROVED</MenuItem>
-              <MenuItem value="PENDING">PENDING</MenuItem>
-              <MenuItem value="REJECTED">REJECTED</MenuItem>
-            </Select>
+    <Box p={2} mt={1}>
+      <Button variant="contained" disableElevation onClick={() => navigate("/")}>Home</Button>
+      <Card sx={{ maxWidth: "1100px", margin: "auto", mt: 4, padding: "20px", backgroundColor: "#f5f5f5" }}>
+        <CardContent>
+          {/* Header */}
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <Typography variant="h6">Approve User</Typography>
+          </Box>
+          {/* User input form */}
+          <Grid container spacing={3}>
+            <Grid item xs={6}>
+              <TextField
+                label="User Name"
+                fullWidth
+                variant="outlined"
+                value={username}
+                onChange={handleUsernameChange}
+                sx={{ mb: 2 }}
+              />
+              <Select
+                fullWidth
+                value={status}
+                onChange={handleStatusChange}
+                variant="outlined"
+                sx={{ mb: 2 }}
+              >
+                <MenuItem value="APPROVED">APPROVED</MenuItem>
+                <MenuItem value="PENDING">PENDING</MenuItem>
+                <MenuItem value="REJECTED">REJECTED</MenuItem>
+              </Select>
+            </Grid>
           </Grid>
-        </Grid>
-
-        {/* Approve button */}
-        <Button
-          variant="contained"
-          fullWidth
-          sx={{ backgroundColor: "blue", color: "white" }}
-          onClick={handleApproveUser}
-        >
-          Approve User
-        </Button>
-      </CardContent>
-
-      {/* Table of pending users */}
-      <TableContainer component={Paper} sx={{ mt: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Username</TableCell>
-              <TableCell>Roles</TableCell>
-              <TableCell>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users
-              .filter(user => user.approvalStatus === "PENDING")
-              .map(user => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.id}</TableCell>
-                  <TableCell>{user.username}</TableCell>
-                  <TableCell>{user.roles.join(", ")}</TableCell>
-                  <TableCell>
-                    {/* Load user details into form */}
-                    <Button onClick={() => handleFillFields(user)}>Select</Button>
-                  </TableCell>
+          {/* Approve button */}
+          <Button
+            variant="contained"
+            fullWidth
+            sx={{ backgroundColor: "blue", color: "white" }}
+            onClick={handleApproveUser}
+          >
+            Approve User
+          </Button>
+        </CardContent>
+        {/* Table of pending users */}
+        <Paper sx={{ width: "100%", mt: 4, p: { xs: 1, sm: 2 } }}>
+          <TableContainer sx={{ maxHeight: 320, overflowY: "auto", overflowX: "auto" }}>
+            <Table stickyHeader sx={{ minWidth: 400 }} size="small" aria-label="pending users table">
+              <TableHead>
+                <TableRow>
+                  <TableCell variant="head" align="left" sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 50 }}>ID</TableCell>
+                  <TableCell variant="head" align="left" sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 120, wordBreak: "break-word", whiteSpace: "pre-line" }}>Username</TableCell>
+                  <TableCell variant="head" align="left" sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 120, wordBreak: "break-word", whiteSpace: "pre-line" }}>Roles</TableCell>
+                  <TableCell variant="head" align="left" sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 100 }}>Action</TableCell>
                 </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Card>
+              </TableHead>
+              <TableBody>
+                {users.filter(user => user.approvalStatus === "PENDING").map(user => (
+                  <TableRow key={user.id}>
+                    <TableCell align="left" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>{user.id}</TableCell>
+                    <TableCell align="left" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>{user.username}</TableCell>
+                    <TableCell align="left" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>{user.roles.join(", ")}</TableCell>
+                    <TableCell align="left">
+                      <Button onClick={() => handleFillFields(user)}>Select</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      </Card>
+    </Box>
   );
 };
 
