@@ -27,7 +27,7 @@ export const searchPartsBySerial = async (serial) => {
   const response = await axiosInstance.get(`/api/parts/search-by-serial`, {
     params: { serial },
   });
-  return response.data; // returns parts array
+  return response.data; 
 };
 
 export default axiosInstance;
