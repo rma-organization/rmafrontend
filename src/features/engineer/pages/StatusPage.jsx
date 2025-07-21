@@ -166,19 +166,34 @@ const ListRequestsComponent = () => {
   const handlePageChange = (event, newPage) => setPage(newPage);
 
   return (
-    <>
+    <Box sx={{ 
+      height: '100vh',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <Snackbar
         open={Boolean(successMessage)}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         message={successMessage}
       />
-      <Box p={2} mt={10}>
-        <Button variant="contained" component={Link} to="/engineer-home" sx={{ mb: 3 }}>
+      
+      <Box sx={{
+        flex: 1,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        p: 2
+      }}>
+        <Button variant="contained" component={Link} to="/engineer-home"  sx={{ 
+          mb: 3,
+          width: 'fit-content' 
+        }}>
           Home
         </Button>
 
-        <Box bgcolor="lightgray" p={2} mt={3} borderRadius={1}>
+        <Box bgcolor="lightgray" p={2} borderRadius={1} sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <Button
             variant="contained"
             disableElevation
@@ -186,6 +201,7 @@ const ListRequestsComponent = () => {
               backgroundColor: "success.main",
               "&:hover": { backgroundColor: "darkgreen" },
               mb: 2,
+              alignSelf: 'flex-start'
             }}
             component={Link}
             to="/RequestPage"
@@ -193,7 +209,7 @@ const ListRequestsComponent = () => {
             Request New Part
           </Button>
 
-          <Typography variant="h6" fontWeight="bold" color="black" mt={4}>
+          <Typography variant="h6" fontWeight="bold" color="black">
             Requests List
           </Typography>
 
@@ -204,8 +220,15 @@ const ListRequestsComponent = () => {
               {error}
             </Typography>
           ) : (
-            <Paper sx={{ width: "100%", overflow: "hidden", mt: 2 }}>
-              <TableContainer sx={{ maxHeight: 500 }}>
+            <Paper sx={{ 
+              width: "100%", 
+              flex: 1,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              mt: 2
+            }}>
+              <TableContainer sx={{ flex: 1 }}>
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow>
@@ -308,7 +331,7 @@ const ListRequestsComponent = () => {
           )}
         </Box>
       </Box>
-    </>
+    </Box>
   );
 };
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Container,
   Typography,
   Button,
   TextField,
@@ -219,7 +218,7 @@ const RequestPage = () => {
     if (!id) payload.createdAt = new Date().toISOString();
 
     try {
-      const token = localStorage.getItem("token"); // ✅ get the token
+      const token = localStorage.getItem("token");
 
       const response = await fetch(
         id
@@ -229,7 +228,7 @@ const RequestPage = () => {
           method: id ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`, // ✅ attach token
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         }
@@ -250,22 +249,32 @@ const RequestPage = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 3, p: 2, bgcolor: "#fff", borderRadius: 2 }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          p: 2,
-          bgcolor: "#ECECEC",
-          borderRadius: 1,
+    <Box sx={{ 
+      display: 'flex',
+      flexDirection: 'column',
+      p: 3,
+      bgcolor: '#fff',
+      height: '100%',
+    }}>
+      {/* Back button at top-left corner */}
+      <Button 
+        variant="contained" 
+        onClick={() => navigate(-1)}
+        sx={{ 
+          alignSelf: 'flex-start',
+          mb: 2,
+          fontSize: '0.875rem',
+          py: 1,
+          px: 2
         }}
       >
-        <Typography variant="h6">{id ? "Edit Request" : "Add New Request"}</Typography>
-        <Button variant="contained" onClick={() => navigate(-1)}>
-          ← Back
-        </Button>
-      </Box>
+        ← Back
+      </Button>
+
+      {/* Form title */}
+      <Typography variant="h6" sx={{ mb: 3 }}>
+        {id ? "Edit Request" : "Add New Request"}
+      </Typography>
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -276,9 +285,26 @@ const RequestPage = () => {
           {error}
         </Alert>
       ) : (
-        <form onSubmit={handleSubmit}>
-          <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
-            <Box sx={{ flex: 1 }}>
+        <Box 
+          component="form" 
+          onSubmit={handleSubmit} 
+          sx={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3,
+          }}
+        >
+          <Box sx={{ 
+            display: "flex", 
+            gap: 3,
+          }}>
+            {/* Left column */}
+            <Box sx={{ 
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}>
               {[
                 ["name", "Name"],
                 ["srNumber", "SR Number"],
@@ -302,7 +328,9 @@ const RequestPage = () => {
                       : ""
                   }
                   size="small"
-                  sx={{ mb: 1.5 }}
+                  InputLabelProps={{
+                    style: { fontSize: '0.875rem' }
+                  }}
                 />
               ))}
 
@@ -311,15 +339,28 @@ const RequestPage = () => {
                 label="Description"
                 name="description"
                 multiline
-                rows={3}
+                rows={4}
                 value={formData.description}
                 onChange={handleChange}
                 error={errors.description}
                 helperText={errors.description ? "Required" : ""}
                 size="small"
-                sx={{ mb: 1.5 }}
+                InputLabelProps={{
+                  style: { fontSize: '0.875rem' }
+                }}
               />
+            </Box>
 
+            <Divider orientation="vertical" flexItem />
+
+            {/* Right column */}
+            <Box sx={{ 
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              pl: 3,
+            }}>
               <TextField
                 select
                 fullWidth
@@ -330,7 +371,9 @@ const RequestPage = () => {
                 error={errors.vendor}
                 helperText={errors.vendor ? "Required" : ""}
                 size="small"
-                sx={{ mb: 1.5 }}
+                InputLabelProps={{
+                  style: { fontSize: '0.875rem' }
+                }}
               >
                 {vendors.map((v) => (
                   <MenuItem key={v.id} value={v.id}>
@@ -349,7 +392,9 @@ const RequestPage = () => {
                 error={errors.customer}
                 helperText={errors.customer ? "Required" : ""}
                 size="small"
-                sx={{ mb: 1.5 }}
+                InputLabelProps={{
+                  style: { fontSize: '0.875rem' }
+                }}
               >
                 {customers.map((c) => (
                   <MenuItem key={c.id} value={c.id}>
@@ -357,11 +402,7 @@ const RequestPage = () => {
                   </MenuItem>
                 ))}
               </TextField>
-            </Box>
 
-            <Divider flexItem orientation="vertical" sx={{ mx: 1 }} />
-
-            <Box sx={{ flex: 0.6 }}>
               <Autocomplete
                 freeSolo
                 options={partSuggestions}
@@ -381,7 +422,9 @@ const RequestPage = () => {
                     error={errors.partId}
                     helperText={errors.partId ? "Required" : ""}
                     size="small"
-                    sx={{ mb: 1.5 }}
+                    InputLabelProps={{
+                      style: { fontSize: '0.875rem' }
+                    }}
                     InputProps={{
                       ...params.InputProps,
                       endAdornment: (
@@ -402,12 +445,21 @@ const RequestPage = () => {
             </Box>
           </Box>
 
-          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
+          <Button 
+            type="submit" 
+            variant="contained" 
+            fullWidth 
+            sx={{ 
+              mt: 2,
+              py: 1.5,
+              fontSize: '0.875rem'
+            }}
+          >
             {id ? "Update Request" : "Submit Request"}
           </Button>
-        </form>
+        </Box>
       )}
-    </Container>
+    </Box>
   );
 };
 
