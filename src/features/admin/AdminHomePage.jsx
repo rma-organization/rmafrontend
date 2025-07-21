@@ -31,7 +31,7 @@ const AdminHomePage = () => {
 
   // Count users by approvalStatus
   const approvalStatusCounts = {};
-  // Count users by roles (assuming roles is an array)
+  // Count roles only for APPROVED users
   const roleCounts = {};
 
   users.forEach((user) => {
@@ -39,14 +39,16 @@ const AdminHomePage = () => {
     const status = user.approvalStatus || "Unknown";
     approvalStatusCounts[status] = (approvalStatusCounts[status] || 0) + 1;
 
-    // roles counting
-    if (Array.isArray(user.roles)) {
-      user.roles.forEach((role) => {
-        roleCounts[role] = (roleCounts[role] || 0) + 1;
-      });
-    } else {
-      const singleRole = user.roles || "Unknown";
-      roleCounts[singleRole] = (roleCounts[singleRole] || 0) + 1;
+    // Only count roles for APPROVED users
+    if (user.approvalStatus === "APPROVED") {
+      if (Array.isArray(user.roles)) {
+        user.roles.forEach((role) => {
+          roleCounts[role] = (roleCounts[role] || 0) + 1;
+        });
+      } else {
+        const singleRole = user.roles || "Unknown";
+        roleCounts[singleRole] = (roleCounts[singleRole] || 0) + 1;
+      }
     }
   });
 
@@ -67,12 +69,26 @@ const AdminHomePage = () => {
 
   return (
     <Box sx={{
-      minHeight: "100vh",
+      height: "100vh",
+      overflow: "hidden",
       background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-      py: 6,
-      px: { xs: 1, sm: 4 },
+      p: 3, // Add padding around the main card
+      boxSizing: 'border-box', // Ensure padding is included in height
+      display: "flex",
+      flexDirection: "column"
     }}>
-      <Paper elevation={4} sx={{ maxWidth: 1200, mx: "auto", borderRadius: 4, p: { xs: 2, sm: 4 }, boxShadow: 6 }}>
+      <Paper elevation={4} sx={{
+        width: "100%",
+        height: "100%",
+        maxWidth: 1200, // Restore max-width
+        mx: "auto", // Center the card
+        borderRadius: 4, // Restore rounded corners
+        p: { xs: 2, sm: 4 },
+        boxShadow: 6,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "auto" // Allow internal scrolling
+      }}>
         {/* Header */}
         <Grid container alignItems="center" spacing={2} mb={2}>
           <Grid item xs>
