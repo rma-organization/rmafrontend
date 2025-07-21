@@ -14,7 +14,8 @@ import {
   IconButton,
   AppBar,
   Toolbar,
-  Typography
+  Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { styled, ThemeProvider, createTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -25,7 +26,6 @@ import PeopleIcon from '@mui/icons-material/People';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import { useNavigate } from 'react-router-dom';
-import useMediaQuery from '@mui/material/useMediaQuery';
 
 const menuItems = [
   {
@@ -34,8 +34,8 @@ const menuItems = [
     subItems: [
       { name: 'RMA Part Request Management', path: '/PartRequestManagementRMA' },
       { name: 'Part Request Management', path: '/StatusPage' },
-      { name: 'Request', path: '/RequestPage' }
-    ]
+      { name: 'Request', path: '/RequestPage' },
+    ],
   },
   {
     title: 'Supply Chain',
@@ -43,8 +43,8 @@ const menuItems = [
     subItems: [
       { name: 'Part Request Management', path: '/ListInventoryComponent' },
       { name: 'Add New Part', path: '/AddNewInventory' },
-      { name: 'Inventory Management', path: '/InventoryManagement' }
-    ]
+      { name: 'Inventory Management', path: '/InventoryManagement' },
+    ],
   },
   {
     title: 'Identity',
@@ -53,9 +53,9 @@ const menuItems = [
       { name: 'Manage User', path: '/ManageUser' },
       { name: 'Add User', path: '/AddUser' },
       { name: 'Add Vendor', path: '/AddVendor' },
-      { name: 'Add Customer', path: '/AddCustomer' }
-    ]
-  }
+      { name: 'Add Customer', path: '/AddCustomer' },
+    ],
+  },
 ];
 
 const roleAccess = {
@@ -65,15 +65,15 @@ const roleAccess = {
     '/add-inventory', '/ListInventoryComponent', '/InventoryManagement',
     '/EditInventory', '/SuccessfullyAddInventory', '/RequestDetailShow', '/showInventory/:id', '/AddNewInventory'
   ],
-  ENGINEER: ['/engineer-home', '/RequestPage', '/StatusPage']
+  ENGINEER: ['/engineer-home', '/RequestPage', '/StatusPage'],
 };
 
 const StyledList = styled(List)(() => ({
-  '& .MuiListItemIcon-root': { color: 'white' }
+  '& .MuiListItemIcon-root': { color: 'white' },
 }));
 
 const theme = createTheme({
-  palette: { mode: 'dark' }
+  palette: { mode: 'dark' },
 });
 
 export default function Sidebar() {
@@ -128,7 +128,7 @@ export default function Sidebar() {
               mx: 1,
               mb: 1,
               px: 1,
-              py: 0.5
+              py: 0.5,
             }}>
               {menu.subItems.map((subItem) => (
                 <ListItem key={subItem.name} disablePadding>
@@ -136,7 +136,7 @@ export default function Sidebar() {
                     sx={{
                       pl: 4,
                       opacity: isAuthorized(subItem.path) ? 1 : 0.5,
-                      pointerEvents: isAuthorized(subItem.path) ? 'auto' : 'none'
+                      pointerEvents: isAuthorized(subItem.path) ? 'auto' : 'none',
                     }}
                     onClick={() => {
                       if (isAuthorized(subItem.path)) {
@@ -161,14 +161,6 @@ export default function Sidebar() {
     <ThemeProvider theme={theme}>
       {isMobile ? (
         <>
-          <AppBar position="fixed" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
-            <Toolbar>
-              <IconButton color="inherit" edge="start" onClick={() => setOpenDrawer(true)}>
-                <MenuIcon />
-              </IconButton>
-              <Typography variant="h6" noWrap>RMA Web App</Typography>
-            </Toolbar>
-          </AppBar>
           <Drawer
             anchor="left"
             open={openDrawer}
@@ -183,20 +175,31 @@ export default function Sidebar() {
           >
             {SidebarContent}
           </Drawer>
-          <Toolbar />
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={() => setOpenDrawer(true)}
+            sx={{ position: 'fixed', top: 10, left: 10, zIndex: 1300 }}
+          >
+            <MenuIcon />
+          </IconButton>
         </>
       ) : (
-        <Box sx={{ display: 'flex' }}>
-          <Paper sx={{
+        <Box
+          sx={{
             width: '320px',
-            minHeight: '100vh',
+            height: '100vh',
+            position: 'fixed',
+            left: 0,
+            top: 0,
             bgcolor: 'black',
             color: 'white',
             overflowY: 'auto',
-            borderRadius: '20px 0 0 20px'
-          }}>
-            {SidebarContent}
-          </Paper>
+            borderRight: '1px solid rgba(255,255,255,0.1)',
+            zIndex: theme.zIndex.drawer,
+          }}
+        >
+          {SidebarContent}
         </Box>
       )}
     </ThemeProvider>

@@ -10,13 +10,13 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-} from "@mui/material";  // Added Snackbar and Alert
-
+} from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const AddNewInventory = () => {
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -38,10 +38,10 @@ const AddNewInventory = () => {
     airwaybillnumber: "",
   });
 
-  const [error, setError] = useState(null);
   const [vendors, setVendors] = useState([]);
-  const [notificationOpen, setNotificationOpen] = useState(false); // <-- Notification state
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+  const [error, setError] = useState(null);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     const fetchVendors = async () => {
@@ -62,16 +62,32 @@ const AddNewInventory = () => {
       ...prevData,
       [name]: value || "",
     }));
+    setFieldErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: "", // Clear field error when user types
+    }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
 
-    if (!formData.name || !formData.boxPartNumber || !formData.quantity || !formData.vendorId) {
+    const requiredFields = ["name", "boxPartNumber", "quantity", "vendorId"];
+    const newFieldErrors = {};
+
+    requiredFields.forEach((field) => {
+      if (!formData[field]) {
+        newFieldErrors[field] = "This field is required";
+      }
+    });
+
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
       setError("Please fill in all required fields.");
       return;
     }
+
+    setFieldErrors({}); // clear previous errors
 
     const submissionData = {
       ...formData,
@@ -80,14 +96,11 @@ const AddNewInventory = () => {
 
     try {
       const response = await axios.post(`${apiUrl}/api/inventory`, submissionData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
 
       console.log("Part added:", response.data);
 
-      // Clear form
       setFormData({
         name: "",
         boxPartNumber: "",
@@ -108,21 +121,14 @@ const AddNewInventory = () => {
         airwaybillnumber: "",
       });
 
-      // Show notification
       setNotificationOpen(true);
-
-      // Optional: navigate after delay if you want
-      // setTimeout(() => navigate("/SuccessfullyAddInventory"), 3000);
-      // Or just keep as is, navigate immediately:
       navigate("/SuccessfullyAddInventory");
-
     } catch (error) {
       console.error("Error adding part:", error.response ? error.response.data : error);
       setError(error.response?.data?.message || "Failed to add inventory. Please try again.");
     }
   };
 
-  // Handle notification close
   const handleNotificationClose = (event, reason) => {
     if (reason === "clickaway") return;
     setNotificationOpen(false);
@@ -141,7 +147,6 @@ const AddNewInventory = () => {
 
         <Paper sx={{ padding: 3, mt: 2 }}>
           <form onSubmit={handleSubmit}>
-            {/* Your existing form layout (no changes) */}
             <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
               {/* Left Column */}
               <Box flex={1}>
@@ -166,6 +171,8 @@ const AddNewInventory = () => {
                       name={field.name}
                       value={formData[field.name] || ""}
                       onChange={handleChange}
+                      error={!!fieldErrors[field.name]}
+                      helperText={fieldErrors[field.name] || ""}
                     />
                   </Box>
                 ))}
@@ -209,9 +216,7 @@ const AddNewInventory = () => {
                       onChange={handleChange}
                       displayEmpty
                     >
-                      <MenuItem value="" disabled>
-                        Select Status
-                      </MenuItem>
+                      <MenuItem value="" disabled>Select Status</MenuItem>
                       <MenuItem value="Available">Available</MenuItem>
                       <MenuItem value="Not Available">Not Available</MenuItem>
                     </Select>
@@ -223,26 +228,25 @@ const AddNewInventory = () => {
                   <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
                     Vendor
                   </Typography>
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" error={!!fieldErrors.vendorId}>
                     <Select
                       name="vendorId"
                       value={formData.vendorId || ""}
                       onChange={handleChange}
                       displayEmpty
                     >
-                      <MenuItem value="" disabled>
-                        Select Vendor
-                      </MenuItem>
-                      {Array.isArray(vendors) && vendors.length > 0 ? (
-                        vendors.map((vendor) => (
-                          <MenuItem key={vendor.id} value={vendor.id}>
-                            {vendor.name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>No Vendors Available</MenuItem>
-                      )}
+                      <MenuItem value="" disabled>Select Vendor</MenuItem>
+                      {vendors.map((vendor) => (
+                        <MenuItem key={vendor.id} value={vendor.id}>
+                          {vendor.name}
+                        </MenuItem>
+                      ))}
                     </Select>
+                    {fieldErrors.vendorId && (
+                      <Typography variant="caption" color="error">
+                        {fieldErrors.vendorId}
+                      </Typography>
+                    )}
                   </FormControl>
                 </Box>
               </Box>
