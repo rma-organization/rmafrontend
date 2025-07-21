@@ -64,8 +64,27 @@ const AddNewInventory = () => {
     }));
     setFieldErrors((prevErrors) => ({
       ...prevErrors,
-      [name]: "", // Clear field error when user types
+      [name]: "",
     }));
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const errors = { ...fieldErrors };
+
+    if (["name", "boxPartNumber", "quantity", "vendorId"].includes(name) && !value) {
+      errors[name] = "This field is required";
+    }
+
+    if (name === "quantity" && value && (!/^\d+$/.test(value) || parseInt(value) <= 0)) {
+      errors.quantity = "Quantity must be a positive integer";
+    }
+
+    if (name === "amount" && value && (!/^\d+(\.\d{1,2})?$/.test(value) || parseFloat(value) < 0)) {
+      errors.amount = "Amount must be a valid positive number";
+    }
+
+    setFieldErrors(errors);
   };
 
   const handleSubmit = async (event) => {
@@ -81,95 +100,85 @@ const AddNewInventory = () => {
       }
     });
 
+    if (formData.quantity && (!/^\d+$/.test(formData.quantity) || parseInt(formData.quantity) <= 0)) {
+      newFieldErrors.quantity = "Quantity must be a positive integer";
+    }
+
+    if (formData.amount && (!/^\d+(\.\d{1,2})?$/.test(formData.amount) || parseFloat(formData.amount) < 0)) {
+      newFieldErrors.amount = "Amount must be a valid positive number";
+    }
+
     if (Object.keys(newFieldErrors).length > 0) {
       setFieldErrors(newFieldErrors);
-      setError("Please fill in all required fields.");
+      setError("Please correct the highlighted fields.");
       return;
     }
 
-    setFieldErrors({}); // clear previous errors
+    setFieldErrors({});
 
     const submissionData = {
       ...formData,
       quantity: Number(formData.quantity) || 0,
+      amount: parseFloat(formData.amount) || 0,
     };
 
     try {
-      const response = await axios.post(`${apiUrl}/api/inventory`, submissionData, {
+      await axios.post(`${apiUrl}/api/inventory`, submissionData, {
         headers: { "Content-Type": "application/json" },
       });
 
-      console.log("Part added:", response.data);
-
-      setFormData({
-        name: "",
-        boxPartNumber: "",
-        inBoxPartNumber: "",
-        boxSerialNumber: "",
-        inBoxSerialNumber: "",
-        quantity: "",
-        inventoryLocation: "",
-        mitNumber: "",
-        itemType: "",
-        poNumber: "",
-        lotNumber: "",
-        status: "",
-        description: "",
-        vendorId: "",
-        amount: "",
-        currency: "",
-        airwaybillnumber: "",
-      });
-
       setNotificationOpen(true);
-      navigate("/SuccessfullyAddInventory");
+
+      setTimeout(() => {
+        navigate("/SuccessfullyAddInventory");
+      }, 1000);
     } catch (error) {
       console.error("Error adding part:", error.response ? error.response.data : error);
       setError(error.response?.data?.message || "Failed to add inventory. Please try again.");
     }
   };
 
-  const handleNotificationClose = (event, reason) => {
+  const handleNotificationClose = (_, reason) => {
     if (reason === "clickaway") return;
     setNotificationOpen(false);
   };
 
+  const leftFields = [
+    { label: "Name", name: "name" },
+    { label: "Box Part Number", name: "boxPartNumber" },
+    { label: "In Box Part Number", name: "inBoxPartNumber" },
+    { label: "Box Serial Number", name: "boxSerialNumber" },
+    { label: "In Box Serial Number", name: "inBoxSerialNumber" },
+    { label: "QTY", name: "quantity" },
+    { label: "Inventory Location", name: "inventoryLocation" },
+    { label: "MIT Reference Number", name: "mitNumber" },
+    { label: "Item Type", name: "itemType" },
+  ];
+
+  const rightFields = [
+    { label: "PO Number", name: "poNumber" },
+    { label: "LOT Number", name: "lotNumber" },
+    { label: "Airway Bill Number", name: "airwaybillnumber" },
+    { label: "Currency", name: "currency" },
+    { label: "Amount", name: "amount" },
+    { label: "Description", name: "description" },
+  ];
+
   return (
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
-        <Button
-          variant="contained"
-          component={Link}
-          to="/supply-chain-home"
-          sx={{
-            minWidth: 120,
-            px: 3,
-          }}
-        >
+        <Button variant="contained" component={Link} to="/supply-chain-home" sx={{ minWidth: 120, px: 3 }}>
           Home
         </Button>
       </Box>
 
-      <Box
-        p={1}
-        mt={1}
-        sx={{
-          height: { xs: "calc(100vh - 56px)", md: "calc(100vh - 64px)" },
-          overflowY: "auto",
-        }}
-      >
+      <Box p={1} mt={1} sx={{ height: { xs: "calc(100vh - 56px)", md: "calc(100vh - 64px)" }, overflowY: "auto" }}>
         <Box bgcolor="lightgray" p={1} borderRadius={1}>
           <Typography variant="h6" fontWeight="bold" color="black" mb={2}>
             Add New Part
           </Typography>
 
-          <Button
-            variant="contained"
-            disableElevation
-            component={Link}
-            to="/InventoryManagement"
-            sx={{ mb: 2 }}
-          >
+          <Button variant="contained" disableElevation component={Link} to="/InventoryManagement" sx={{ mb: 2 }}>
             Back
           </Button>
 
@@ -178,18 +187,8 @@ const AddNewInventory = () => {
               <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
                 {/* Left Column */}
                 <Box flex={1}>
-                  {[
-                    { label: "Name", name: "name" },
-                    { label: "Box Part Number", name: "boxPartNumber" },
-                    { label: "In Box Part Number", name: "inBoxPartNumber" },
-                    { label: "Box Serial Number", name: "boxSerialNumber" },
-                    { label: "In Box Serial Number", name: "inBoxSerialNumber" },
-                    { label: "QTY", name: "quantity" },
-                    { label: "Inventory Location", name: "inventoryLocation" },
-                    { label: "MIT Reference Number", name: "mitNumber" },
-                    { label: "Item Type", name: "itemType" },
-                  ].map((field, index) => (
-                    <Box key={index} display="flex" alignItems="center" mb={2}>
+                  {leftFields.map((field) => (
+                    <Box key={field.name} display="flex" alignItems="center" mb={2}>
                       <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
                         {field.label}
                       </Typography>
@@ -197,10 +196,11 @@ const AddNewInventory = () => {
                         fullWidth
                         variant="outlined"
                         name={field.name}
-                        value={formData[field.name] || ""}
+                        value={formData[field.name]}
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         error={!!fieldErrors[field.name]}
-                        helperText={fieldErrors[field.name] || ""}
+                        helperText={fieldErrors[field.name]}
                       />
                     </Box>
                   ))}
@@ -208,15 +208,8 @@ const AddNewInventory = () => {
 
                 {/* Right Column */}
                 <Box flex={1}>
-                  {[
-                    { label: "PO Number", name: "poNumber" },
-                    { label: "LOT Number", name: "lotNumber" },
-                    { label: "Airway Bill Number", name: "airwaybillnumber" },
-                    { label: "Currency", name: "currency" },
-                    { label: "Amount", name: "amount" },
-                    { label: "Description", name: "description" },
-                  ].map((field, index) => (
-                    <Box key={index} display="flex" alignItems="center" mb={2}>
+                  {rightFields.map((field) => (
+                    <Box key={field.name} display="flex" alignItems="center" mb={2}>
                       <Typography variant="subtitle1" sx={{ width: "35%", minWidth: "120px" }}>
                         {field.label}
                       </Typography>
@@ -224,8 +217,11 @@ const AddNewInventory = () => {
                         fullWidth
                         variant="outlined"
                         name={field.name}
-                        value={formData[field.name] || ""}
+                        value={formData[field.name]}
                         onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={!!fieldErrors[field.name]}
+                        helperText={fieldErrors[field.name]}
                         multiline={field.name === "description"}
                         rows={field.name === "description" ? 3 : 1}
                       />
@@ -261,8 +257,9 @@ const AddNewInventory = () => {
                     <FormControl fullWidth variant="outlined" error={!!fieldErrors.vendorId}>
                       <Select
                         name="vendorId"
-                        value={formData.vendorId || ""}
+                        value={formData.vendorId}
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         displayEmpty
                       >
                         <MenuItem value="" disabled>
@@ -291,13 +288,7 @@ const AddNewInventory = () => {
               )}
 
               <Box mt={3}>
-                <Button
-                  fullWidth
-                  type="submit"
-                  variant="contained"
-                  sx={{ backgroundColor: "blue", color: "white" }}
-                  disableElevation
-                >
+                <Button fullWidth type="submit" variant="contained" sx={{ backgroundColor: "blue", color: "white" }}>
                   Add Part
                 </Button>
               </Box>
