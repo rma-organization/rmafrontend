@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -17,7 +15,13 @@ import {
   Snackbar,
   CircularProgress,
   Pagination,
+  IconButton
 } from "@mui/material";
+import {
+  Save as SaveIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon
+} from "@mui/icons-material";
 import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
 import { Link } from "react-router-dom";
 
@@ -108,7 +112,6 @@ const ListRequestsComponent = () => {
       setEditRowId(null);
       setSuccessMessage("Request updated successfully!");
 
-      // 🔔 Send Notification
       await sendNotification({
         receiverRole: "rma",
         message: `Request #${rowId} status changed to "${updatedStatus}".`,
@@ -142,7 +145,6 @@ const ListRequestsComponent = () => {
       setRequests((prevRequests) => prevRequests.filter((req) => req.id !== rowId));
       setSuccessMessage("Request deleted successfully!");
 
-      // 🔔 Send Notification
       await sendNotification({
         receiverRole: "manager",
         message: `Request #${rowId} was deleted.`,
@@ -260,30 +262,30 @@ const ListRequestsComponent = () => {
                           </TableCell>
                           <TableCell>
                             {editRowId === row.id ? (
-                              <Button
-                                variant="contained"
+                              <IconButton
                                 color="success"
                                 onClick={() => handleSave(row.id)}
+                                aria-label="save"
                               >
-                                Save
-                              </Button>
+                                <SaveIcon />
+                              </IconButton>
                             ) : (
                               <Box display="flex" gap={1}>
-                                <Button
-                                  variant="contained"
+                                <IconButton
                                   color="warning"
                                   onClick={() => handleEdit(row)}
                                   disabled={!validTransitions[row.status]?.length}
+                                  aria-label="edit"
                                 >
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="contained"
+                                  <EditIcon />
+                                </IconButton>
+                                <IconButton
                                   color="error"
                                   onClick={() => handleDelete(row.id)}
+                                  aria-label="delete"
                                 >
-                                  Delete
-                                </Button>
+                                  <DeleteIcon />
+                                </IconButton>
                               </Box>
                             )}
                           </TableCell>
