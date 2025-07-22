@@ -9,7 +9,7 @@ export const connect = (onMessageReceived) => {
   console.log("📧 Username from localStorage:", username);
 
   stompClient = new Client({
-    brokerURL: "ws://localhost:8081/ws", // Your WebSocket endpoint
+    brokerURL: "ws://localhost:8080/ws", // Your WebSocket endpoint
     connectHeaders: {
       username: username, // Pass email in headers for connection
     },

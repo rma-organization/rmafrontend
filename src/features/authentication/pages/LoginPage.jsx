@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/LoginPage.css";
-import { jwtDecode } from "jwt-decode";
+import  jwtDecode  from "jwt-decode";
 
 
 import logoPath from "../../../assets/logo.png"; // Correct the path for the image
