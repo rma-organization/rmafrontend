@@ -13,11 +13,9 @@ import {
   TableRow,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../services/api/axios"; // ✅ Use centralized axios instance
 
 const AddCustomer = () => {
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
-
   const [formData, setFormData] = useState({ name: "" });
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
@@ -28,15 +26,15 @@ const AddCustomer = () => {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/api/customers`);
+        const response = await axiosInstance.get("/api/customers");
         setVendors(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
-        console.error("Error fetching vendors:", error);
+        console.error("Error fetching customers:", error);
         setVendors([]);
       }
     };
     fetchCustomers();
-  }, [apiUrl]);
+  }, []);
 
   const handleChange = (event) => {
     setFormData({ ...formData, [event.target.name]: event.target.value || "" });
@@ -55,9 +53,7 @@ const AddCustomer = () => {
     }
 
     try {
-      const response = await axios.post(`${apiUrl}/api/customers`, formData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await axiosInstance.post("/api/customers", formData);
       setVendors((prev) => [...prev, response.data]);
       setFormData({ name: "" });
       setSuccessMessage("Customer added successfully!");
@@ -73,7 +69,7 @@ const AddCustomer = () => {
     setError(null);
     setSuccessMessage("");
     try {
-      await axios.delete(`${apiUrl}/api/customers/${customerId}`);
+      await axiosInstance.delete(`/api/customers/${customerId}`);
       setVendors((prevVendors) => prevVendors.filter((customer) => customer.id !== customerId));
       setSuccessMessage("Customer deleted successfully!");
     } catch (error) {

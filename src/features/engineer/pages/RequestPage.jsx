@@ -51,6 +51,7 @@ const RequestPage = () => {
 
         if (!vendorRes.ok || !customerRes.ok) {
           setError("Failed to load vendors or customers.");
+          setLoading(false);
           return;
         }
 
@@ -102,7 +103,7 @@ const RequestPage = () => {
     setPartLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:8080/api/inventory/search?query=${term}`
+        `http://localhost:8080/api/inventory/search?query=${encodeURIComponent(term)}`
       );
       if (res.ok) {
         const data = await res.json();
@@ -228,7 +229,7 @@ const RequestPage = () => {
           method: id ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         }
@@ -249,24 +250,20 @@ const RequestPage = () => {
   };
 
   return (
-    <Box sx={{ 
-      display: 'flex',
-      flexDirection: 'column',
-      p: 3,
-      bgcolor: '#fff',
-      height: '100%',
-    }}>
-      {/* Back button at top-left corner */}
-      <Button 
-        variant="contained" 
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        p: 3,
+        bgcolor: "#fff",
+        height: "100%",
+      }}
+    >
+      {/* Back button */}
+      <Button
+        variant="contained"
         onClick={() => navigate(-1)}
-        sx={{ 
-          alignSelf: 'flex-start',
-          mb: 2,
-          fontSize: '0.875rem',
-          py: 1,
-          px: 2
-        }}
+        sx={{ alignSelf: "flex-start", mb: 2, fontSize: "0.875rem", py: 1, px: 2 }}
       >
         ← Back
       </Button>
@@ -285,26 +282,14 @@ const RequestPage = () => {
           {error}
         </Alert>
       ) : (
-        <Box 
-          component="form" 
-          onSubmit={handleSubmit} 
-          sx={{ 
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3,
-          }}
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ display: "flex", flexDirection: "column", gap: 3 }}
         >
-          <Box sx={{ 
-            display: "flex", 
-            gap: 3,
-          }}>
+          <Box sx={{ display: "flex", gap: 3 }}>
             {/* Left column */}
-            <Box sx={{ 
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}>
+            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
               {[
                 ["name", "Name"],
                 ["srNumber", "SR Number"],
@@ -328,9 +313,7 @@ const RequestPage = () => {
                       : ""
                   }
                   size="small"
-                  InputLabelProps={{
-                    style: { fontSize: '0.875rem' }
-                  }}
+                  InputLabelProps={{ style: { fontSize: "0.875rem" } }}
                 />
               ))}
 
@@ -345,22 +328,22 @@ const RequestPage = () => {
                 error={errors.description}
                 helperText={errors.description ? "Required" : ""}
                 size="small"
-                InputLabelProps={{
-                  style: { fontSize: '0.875rem' }
-                }}
+                InputLabelProps={{ style: { fontSize: "0.875rem" } }}
               />
             </Box>
 
             <Divider orientation="vertical" flexItem />
 
             {/* Right column */}
-            <Box sx={{ 
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              pl: 3,
-            }}>
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                pl: 3,
+              }}
+            >
               <TextField
                 select
                 fullWidth
@@ -371,9 +354,7 @@ const RequestPage = () => {
                 error={errors.vendor}
                 helperText={errors.vendor ? "Required" : ""}
                 size="small"
-                InputLabelProps={{
-                  style: { fontSize: '0.875rem' }
-                }}
+                InputLabelProps={{ style: { fontSize: "0.875rem" } }}
               >
                 {vendors.map((v) => (
                   <MenuItem key={v.id} value={v.id}>
@@ -392,9 +373,7 @@ const RequestPage = () => {
                 error={errors.customer}
                 helperText={errors.customer ? "Required" : ""}
                 size="small"
-                InputLabelProps={{
-                  style: { fontSize: '0.875rem' }
-                }}
+                InputLabelProps={{ style: { fontSize: "0.875rem" } }}
               >
                 {customers.map((c) => (
                   <MenuItem key={c.id} value={c.id}>
@@ -422,9 +401,7 @@ const RequestPage = () => {
                     error={errors.partId}
                     helperText={errors.partId ? "Required" : ""}
                     size="small"
-                    InputLabelProps={{
-                      style: { fontSize: '0.875rem' }
-                    }}
+                    InputLabelProps={{ style: { fontSize: "0.875rem" } }}
                     InputProps={{
                       ...params.InputProps,
                       endAdornment: (
@@ -445,15 +422,11 @@ const RequestPage = () => {
             </Box>
           </Box>
 
-          <Button 
-            type="submit" 
-            variant="contained" 
-            fullWidth 
-            sx={{ 
-              mt: 2,
-              py: 1.5,
-              fontSize: '0.875rem'
-            }}
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            sx={{ mt: 2, py: 1.5, fontSize: "0.875rem" }}
           >
             {id ? "Update Request" : "Submit Request"}
           </Button>

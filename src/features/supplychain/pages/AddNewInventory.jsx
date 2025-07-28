@@ -12,11 +12,10 @@ import {
   Alert,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../services/api/axios"; // Adjust the path as needed
 
 const AddNewInventory = () => {
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -46,7 +45,7 @@ const AddNewInventory = () => {
   useEffect(() => {
     const fetchVendors = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/api/vendors`);
+        const response = await axiosInstance.get("/api/vendors");
         setVendors(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching vendors:", error);
@@ -54,7 +53,7 @@ const AddNewInventory = () => {
       }
     };
     fetchVendors();
-  }, [apiUrl]);
+  }, []);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -123,9 +122,8 @@ const AddNewInventory = () => {
     };
 
     try {
-      await axios.post(`${apiUrl}/api/inventory`, submissionData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      // Use axiosInstance so token is sent automatically
+      await axiosInstance.post("/api/inventory", submissionData);
 
       setNotificationOpen(true);
 
@@ -172,7 +170,11 @@ const AddNewInventory = () => {
         </Button>
       </Box>
 
-      <Box p={1} mt={1} sx={{ height: { xs: "calc(100vh - 56px)", md: "calc(100vh - 64px)" }, overflowY: "auto" }}>
+      <Box
+        p={1}
+        mt={1}
+        sx={{ height: { xs: "calc(100vh - 56px)", md: "calc(100vh - 64px)" }, overflowY: "auto" }}
+      >
         <Box bgcolor="lightgray" p={1} borderRadius={1}>
           <Typography variant="h6" fontWeight="bold" color="black" mb={2}>
             Add New Part
