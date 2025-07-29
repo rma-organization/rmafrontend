@@ -91,6 +91,7 @@ const PartRequestManagementRMA = () => {
         message: `RMA request #${rowId} marked as ${updatedStatus}.`,
         type: "REQUEST",
         status: updatedStatus,
+        requestsId: rowId, 
       });
     } catch (error) {
       console.error("Error updating request:", error);

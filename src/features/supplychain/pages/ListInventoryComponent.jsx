@@ -15,12 +15,12 @@ import {
   Snackbar,
   CircularProgress,
   Pagination,
-  IconButton
+  IconButton,
 } from "@mui/material";
 import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
-  Save as SaveIcon
+  Save as SaveIcon,
 } from "@mui/icons-material";
 import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
 import { Link, useNavigate } from "react-router-dom";
@@ -87,7 +87,7 @@ const ListRequestsComponent = () => {
       setEditRowId(null);
       setSuccessMessage("Request updated successfully!");
 
-      // Send Notification to engineer
+      // Send Notification to engineer with correct 'requestsId' key
       const message = `Request ID ${rowId} status updated to ${updatedStatus}`;
       await sendNotification({
         receiverRole: "engineer",
@@ -95,9 +95,12 @@ const ListRequestsComponent = () => {
         type: "STATUS_UPDATE",
         status: updatedStatus,
         senderUsername: username || "system",
+        requestsId: rowId, // <-- Correct key for backend
       });
+      
     } catch (error) {
       console.error("Error updating request or sending notification:", error);
+      setError("Failed to update request or send notification.");
     }
   };
 
