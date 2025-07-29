@@ -3,64 +3,56 @@ import { Client } from "@stomp/stompjs";
 
 let stompClient = null;
 
-export const connect = (onMessageReceived) => {
+export const connect = (onNotificationReceived) => {
   const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
   const username = localStorage.getItem("username");
-  console.log("Connecting as:", username);
+
+  if (!token || !role || !username) {
+    console.error("❌ Missing token, role, or username in localStorage");
+    return;
+  }
 
   stompClient = new Client({
     webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
     connectHeaders: {
-      Authorization: `Bearer ${token}`,  
+      Authorization: `Bearer ${token}`,
+      username: username,
     },
     reconnectDelay: 5000,
-
     onConnect: () => {
       console.log("✅ Connected to WebSocket");
 
-      // Subscribe to private user queue (Spring sends user-specific messages here)
-      stompClient.subscribe("/user/queue/messages", (message) => {
-        const data = JSON.parse(message.body);
-        onMessageReceived(data);
+      // Role-based broadcast notifications
+      stompClient.subscribe(`/topic/notifications/${role.toLowerCase()}`, (message) => {
+        const notification = JSON.parse(message.body);
+        console.log("📢 Broadcast notification:", notification);
+        onNotificationReceived(notification);
       });
 
-      // Notify server that user connected
-      stompClient.publish({
-        destination: "/app/chat.addUser",
-        body: JSON.stringify({ sender: username }),
-      });
+      // Private queue for engineers only
+      if (role.toLowerCase() === "engineer") {
+        stompClient.subscribe(`/user/queue/notifications`, (message) => {
+          const notification = JSON.parse(message.body);
+          console.log("📩 Private engineer notification:", notification);
+          onNotificationReceived(notification);
+        });
+      }
     },
-
     onStompError: (frame) => {
-      console.error("❌ STOMP error:", frame);
+      console.error("STOMP Error:", frame.headers["message"]);
     },
-
-    onWebSocketClose: (event) => {
-      console.log("WebSocket closed:", event);
-    },
-
-    onWebSocketError: (event) => {
-      console.error("WebSocket error:", event);
+    onWebSocketError: (error) => {
+      console.error("WebSocket error:", error);
     },
   });
 
   stompClient.activate();
 };
 
-export const sendMessage = (message) => {
-  if (stompClient && stompClient.connected) {
-    stompClient.publish({
-      destination: "/app/chat.sendMessage",
-      body: JSON.stringify(message),
-    });
-  } else {
-    console.error("❌ Cannot send message. STOMP client not connected.");
-  }
-};
-
 export const disconnect = () => {
-  if (stompClient) {
+  if (stompClient && stompClient.active) {
     stompClient.deactivate();
-    console.log("Disconnected from WebSocket");
+    console.log("🔌 Disconnected from WebSocket");
   }
 };

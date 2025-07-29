@@ -58,9 +58,9 @@ export const updateRequestStatus = async (requestId, status) => {
 };
 
 // ========== NOTIFICATIONS ==========
-export const sendNotification = ({ receiverRole, message, type, status }) =>
+export const sendNotification = ({ receiverRole, message, type, status,requestsId }) =>
   axiosInstance.post(`${NOTIFICATION_BASE_URL}/send`, null, {
-    params: { receiverRole, message, type, status },
+    params: { receiverRole, message, type, status, requestsId },
   });
 
 export const getRoleNotifications = () =>
