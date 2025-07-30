@@ -1,3 +1,4 @@
+
 // import React, { useEffect, useState } from "react";
 // import { useNavigate } from "react-router-dom";
 // import {
@@ -30,7 +31,6 @@
 //   const navigate = useNavigate();
 //   const isMobile = useMediaQuery("(max-width:900px)");
 
-//   // Authentication and user info
 //   useEffect(() => {
 //     const token = localStorage.getItem("token");
 //     const storedUsername = localStorage.getItem("username");
@@ -45,7 +45,6 @@
 //     if (storedRole) setRole(storedRole);
 //   }, [navigate]);
 
-//   // Notification fetching and STOMP setup
 //   useEffect(() => {
 //     const token = localStorage.getItem("token");
 //     const role = localStorage.getItem("role");
@@ -54,7 +53,6 @@
 
 //     const fetchNotifications = async () => {
 //       try {
-//         // For engineers fetch personal notifications, else fetch role notifications
 //         let url = "http://localhost:8080/api/notifications/role";
 //         if (role.toLowerCase() === "engineer") {
 //           url = "http://localhost:8080/api/notifications/user";
@@ -88,7 +86,6 @@
 //       },
 //       reconnectDelay: 5000,
 //       onConnect: () => {
-//         // Subscribe to appropriate topic based on role
 //         stompClient.subscribe(`/topic/notifications/${role.toLowerCase()}`, (message) => {
 //           const newNotification = JSON.parse(message.body);
 //           setNotifications((prev) => [newNotification, ...prev]);
@@ -257,16 +254,6 @@
 //             </MenuItem>
 //           ))
 //         )}
-
-//         <MenuItem
-//           onClick={() => {
-//             handleNotificationClose();
-//             navigate("/notifications");
-//           }}
-//           sx={{ justifyContent: "center", fontWeight: "bold", color: "primary.main" }}
-//         >
-//           See all
-//         </MenuItem>
 //       </Menu>
 //     </>
 //   );
@@ -275,25 +262,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  IconButton,
-  Badge,
-  Menu,
-  MenuItem,
-  Avatar,
-  useMediaQuery,
+  AppBar, Toolbar, Typography, Box, IconButton,
+  Badge, Menu, MenuItem, Avatar, useMediaQuery
 } from "@mui/material";
 import {
   Notifications as NotificationsIcon,
   Menu as MenuIcon,
-  AccountCircle,
+  AccountCircle
 } from "@mui/icons-material";
 import { formatDistanceToNow } from "date-fns";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import {
+  getUserNotifications,
+  getRoleNotifications,
+} from "../../services/api/NotificationServices"; // adjust path as needed
 
 export default function NavBar() {
   const [notifications, setNotifications] = useState([]);
@@ -319,38 +302,22 @@ export default function NavBar() {
   }, [navigate]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
-    if (!token || !role) return;
+    if (!role) return;
 
     const fetchNotifications = async () => {
       try {
-        let url = "http://localhost:8080/api/notifications/role";
-        if (role.toLowerCase() === "engineer") {
-          url = "http://localhost:8080/api/notifications/user";
-        }
-
-        const response = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setNotifications(data);
-        } else {
-          console.error("Failed to fetch notifications, status:", response.status);
-        }
+        const response = role.toLowerCase() === "engineer"
+          ? await getUserNotifications()
+          : await getRoleNotifications();
+        setNotifications(response.data);
       } catch (err) {
-        console.error("Failed to fetch notifications", err);
+        console.error("Failed to load notifications:", err);
       }
     };
 
     fetchNotifications();
+
+    const token = localStorage.getItem("token");
 
     const stompClient = new Client({
       webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
@@ -367,160 +334,62 @@ export default function NavBar() {
     });
 
     stompClient.activate();
-
-    return () => {
-      stompClient.deactivate();
-    };
+    return () => stompClient.deactivate();
   }, [role]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("username");
+    localStorage.clear();
     navigate("/login");
-  };
-
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleNotificationOpen = (event) => {
-    setNotificationAnchorEl(event.currentTarget);
-  };
-
-  const handleNotificationClose = () => {
-    setNotificationAnchorEl(null);
   };
 
   return (
     <>
-      <AppBar
-        position="fixed"
-        sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundColor: "#fff",
-          color: "#000",
-          boxShadow: 1,
-          width: isMobile ? "100%" : "calc(100% - 320px)",
-          left: isMobile ? 0 : "320px",
-        }}
-      >
-        <Toolbar sx={{ display: "flex" }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, backgroundColor: "#fff", color: "#000", boxShadow: 1, width: isMobile ? "100%" : "calc(100% - 320px)", left: isMobile ? 0 : "320px" }}>
+        <Toolbar>
           {isMobile && (
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={() => {
-                const event = new CustomEvent("openMobileDrawer");
-                window.dispatchEvent(event);
-              }}
-            >
+            <IconButton color="inherit" onClick={() => window.dispatchEvent(new CustomEvent("openMobileDrawer"))}>
               <MenuIcon />
             </IconButton>
           )}
-
-          <Box
-            display="flex"
-            alignItems="center"
-            gap={2}
-            sx={{ marginLeft: "auto" }}
-          >
-            <IconButton
-              color="inherit"
-              aria-label="notifications"
-              onClick={handleNotificationOpen}
-            >
+          <Box sx={{ marginLeft: "auto", display: "flex", gap: 2 }}>
+            <IconButton color="inherit" onClick={(e) => setNotificationAnchorEl(e.currentTarget)}>
               <Badge badgeContent={notifications.length} color="error">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
-
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 500, display: { xs: "none", sm: "block" } }}
-            >
+            <Typography variant="subtitle1" sx={{ fontWeight: 500, display: { xs: "none", sm: "block" } }}>
               {username || "User"}
             </Typography>
-
-            <IconButton
-              edge="end"
-              aria-label="account of current user"
-              aria-controls="profile-menu"
-              aria-haspopup="true"
-              onClick={handleProfileMenuOpen}
-              color="inherit"
-              sx={{ p: 0 }}
-            >
-              <Avatar sx={{ bgcolor: "primary.main" }}>
-                {username ? username.charAt(0).toUpperCase() : <AccountCircle />}
-              </Avatar>
+            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0 }}>
+              <Avatar sx={{ bgcolor: "primary.main" }}>{username?.[0]?.toUpperCase() || <AccountCircle />}</Avatar>
             </IconButton>
           </Box>
         </Toolbar>
       </AppBar>
 
-      {/* Profile Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
         <Box px={2} py={1}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            {username || "User"}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {role}
-          </Typography>
+          <Typography variant="subtitle1" fontWeight="bold">{username || "User"}</Typography>
+          <Typography variant="body2" color="text.secondary">{role}</Typography>
         </Box>
         <MenuItem onClick={handleLogout}>
-          <Typography variant="body1" color="error">
-            Logout
-          </Typography>
+          <Typography variant="body1" color="error">Logout</Typography>
         </MenuItem>
       </Menu>
 
-      {/* Notification Menu */}
-      <Menu
-        anchorEl={notificationAnchorEl}
-        open={Boolean(notificationAnchorEl)}
-        onClose={handleNotificationClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-        sx={{
-          "& .MuiPaper-root": {
-            minWidth: 300,
-            maxHeight: 400,
-            overflowY: "auto",
-            borderRadius: "8px",
-          },
-        }}
-      >
-        <Box sx={{ px: 2, py: 1, borderBottom: "1px solid #eee" }}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            Notifications
-          </Typography>
+      <Menu anchorEl={notificationAnchorEl} open={Boolean(notificationAnchorEl)} onClose={() => setNotificationAnchorEl(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
+        <Box px={2} py={1} borderBottom="1px solid #eee">
+          <Typography variant="subtitle1" fontWeight="bold">Notifications</Typography>
         </Box>
-
         {notifications.length === 0 ? (
           <MenuItem disabled>No new notifications</MenuItem>
         ) : (
-          notifications.slice(0, 5).map((notif, index) => (
-            <MenuItem key={index} onClick={handleNotificationClose}>
+          notifications.slice(0, 5).map((notif, i) => (
+            <MenuItem key={i} onClick={() => setNotificationAnchorEl(null)}>
               <Box>
-                <Typography variant="body2" fontWeight="bold">
-                  {notif.type || "New Notification"}
-                </Typography>
+                <Typography variant="body2" fontWeight="bold">{notif.type || "Notification"}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {notif.timestamp
-                    ? formatDistanceToNow(new Date(notif.timestamp), { addSuffix: true })
-                    : "Just now"}
+                  {notif.timestamp ? formatDistanceToNow(new Date(notif.timestamp), { addSuffix: true }) : "Just now"}
                 </Typography>
                 <Typography variant="body2">{notif.message}</Typography>
               </Box>

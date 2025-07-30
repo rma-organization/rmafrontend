@@ -20,8 +20,10 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { listRequests } from "../../../services/api/InventoryServices";
-import { searchInventoryBySerial } from "../../../services/api/axios";
+import { listRequests } from "../../../services/api/RequestServices";
+//import { listRequests } from "../../../services/api/InventoryServices";
+//import { searchInventoryBySerial } from "../../../services/api/axios";
+import { searchInventoryBySerial } from "../../../services/api/commonService";
 import jwtDecode from "jwt-decode";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
