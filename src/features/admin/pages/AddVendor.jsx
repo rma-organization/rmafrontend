@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import axiosInstance from "../../../services/api/axios"; // ✅ Import your central axios instance
+import axiosInstance from "../../../services/api/axios";
 
 const AddVendor = () => {
   const [formData, setFormData] = useState({ name: "" });
