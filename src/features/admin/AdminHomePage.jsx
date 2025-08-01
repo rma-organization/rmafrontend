@@ -11,35 +11,30 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import logo from "../../assets/logo.png";
+import { fetchAllUsers } from "../../services/api/authService";
 
 const AdminHomePage = () => {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const loadUsers = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/auth/users");
-        const data = await response.json();
-        setUsers(data);
+        const res = await fetchAllUsers();
+        setUsers(res.data);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
     };
-    fetchUsers();
+    loadUsers();
   }, []);
 
-  // Count users by approvalStatus
   const approvalStatusCounts = {};
-  // Count roles only for APPROVED users
   const roleCounts = {};
 
   users.forEach((user) => {
-    // approvalStatus counting
     const status = user.approvalStatus || "Unknown";
     approvalStatusCounts[status] = (approvalStatusCounts[status] || 0) + 1;
 
-    // Only count roles for APPROVED users
     if (user.approvalStatus === "APPROVED") {
       if (Array.isArray(user.roles)) {
         user.roles.forEach((role) => {
@@ -62,34 +57,37 @@ const AdminHomePage = () => {
     count,
   }));
 
-  // Summary stats
   const totalUsers = users.filter(user => user.approvalStatus === "APPROVED").length;
   const totalRoles = Object.keys(roleCounts).length;
   const pendingApprovals = users.filter(user => user.approvalStatus === "PENDING").length;
 
   return (
-    <Box sx={{
-      height: "100vh",
-      overflow: "hidden",
-      background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-      p: 3, // Add padding around the main card
-      boxSizing: 'border-box', // Ensure padding is included in height
-      display: "flex",
-      flexDirection: "column"
-    }}>
-      <Paper elevation={4} sx={{
-        width: "100%",
-        height: "100%",
-        maxWidth: 1200, // Restore max-width
-        mx: "auto", // Center the card
-        borderRadius: 4, // Restore rounded corners
-        p: { xs: 2, sm: 4 },
-        boxShadow: 6,
+    <Box
+      sx={{
+        height: "100vh",
+        overflow: "hidden",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        p: 3,
+        boxSizing: 'border-box',
         display: "flex",
-        flexDirection: "column",
-        overflow: "auto" // Allow internal scrolling
-      }}>
-        {/* Header */}
+        flexDirection: "column"
+      }}
+    >
+      <Paper
+        elevation={4}
+        sx={{
+          width: "100%",
+          height: "100%",
+          maxWidth: 1200,
+          mx: "auto",
+          borderRadius: 4,
+          p: { xs: 2, sm: 4 },
+          boxShadow: 6,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "auto"
+        }}
+      >
         <Grid container alignItems="center" spacing={2} mb={2}>
           <Grid item xs>
             <Typography variant="h4" fontWeight="bold" gutterBottom>
@@ -102,7 +100,6 @@ const AdminHomePage = () => {
         </Grid>
         <Divider sx={{ mb: 3 }} />
 
-        {/* Summary Cards */}
         <Grid container spacing={3} mb={4}>
           <Grid item xs={12} sm={4}>
             <Card sx={{ display: "flex", alignItems: "center", p: 2, boxShadow: 3, borderLeft: "6px solid #1976d2" }}>
@@ -139,7 +136,6 @@ const AdminHomePage = () => {
           </Grid>
         </Grid>
 
-        {/* Charts Section */}
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
             <Paper elevation={2} sx={{ p: 2, borderRadius: 3, height: 370 }}>

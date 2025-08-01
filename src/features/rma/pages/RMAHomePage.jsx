@@ -21,7 +21,7 @@ import {
 } from "chart.js";
 
 import axiosInstance from "../../../services/api/axios";
-import { searchInventoryBySerial } from "../../../services/api/axios"; // Adjust path if needed
+import { searchInventoryBySerial } from "../../../services/api/commonService"; // Adjust path if needed
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 

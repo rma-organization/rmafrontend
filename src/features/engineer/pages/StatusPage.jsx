@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -22,7 +23,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon
 } from "@mui/icons-material";
-import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
+import { listRequests, updateRequestStatus, deleteRequest } from "../../../services/api/RequestServices";
+import { sendNotification, } from "../../../services/api/NotificationServices";
 import { Link } from "react-router-dom";
 
 const ListRequestsComponent = () => {
@@ -89,20 +91,7 @@ const ListRequestsComponent = () => {
     }
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: updatedStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update request.");
-      }
+      await updateRequestStatus(rowId, updatedStatus);
 
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
@@ -114,11 +103,10 @@ const ListRequestsComponent = () => {
 
       await sendNotification({
         receiverRole: "rma",
-        message: `Request #${rowId} status changed to "${updatedStatus}".`,
+        message: `Request #${rowId} status changed to \"${updatedStatus}\".`,
         type: "REQUEST",
         status: updatedStatus,
       });
-
     } catch (error) {
       setError("Error updating request.");
       console.error("Error updating request:", error);
@@ -129,18 +117,7 @@ const ListRequestsComponent = () => {
     if (!window.confirm("Are you sure you want to permanently delete this request?")) return;
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete request.");
-      }
+      await deleteRequest(rowId);
 
       setRequests((prevRequests) => prevRequests.filter((req) => req.id !== rowId));
       setSuccessMessage("Request deleted successfully!");
@@ -151,7 +128,6 @@ const ListRequestsComponent = () => {
         type: "REQUEST",
         status: "Deleted",
       });
-
     } catch (error) {
       console.error("Error deleting request:", error);
     }
@@ -166,30 +142,16 @@ const ListRequestsComponent = () => {
   const handlePageChange = (event, newPage) => setPage(newPage);
 
   return (
-    <Box sx={{ 
-      height: '100vh',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <Box sx={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <Snackbar
         open={Boolean(successMessage)}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         message={successMessage}
       />
-      
-      <Box sx={{
-        flex: 1,
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        p: 2
-      }}>
-        <Button variant="contained" component={Link} to="/engineer-home"  sx={{ 
-          mb: 3,
-          width: 'fit-content' 
-        }}>
+
+      <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', p: 2 }}>
+        <Button variant="contained" component={Link} to="/engineer-home" sx={{ mb: 3, width: 'fit-content' }}>
           Home
         </Button>
 
@@ -197,12 +159,7 @@ const ListRequestsComponent = () => {
           <Button
             variant="contained"
             disableElevation
-            sx={{
-              backgroundColor: "success.main",
-              "&:hover": { backgroundColor: "darkgreen" },
-              mb: 2,
-              alignSelf: 'flex-start'
-            }}
+            sx={{ backgroundColor: "success.main", "&:hover": { backgroundColor: "darkgreen" }, mb: 2, alignSelf: 'flex-start' }}
             component={Link}
             to="/RequestPage"
           >
@@ -216,18 +173,9 @@ const ListRequestsComponent = () => {
           {loading ? (
             <CircularProgress />
           ) : error ? (
-            <Typography variant="body1" color="error" mt={2}>
-              {error}
-            </Typography>
+            <Typography variant="body1" color="error" mt={2}>{error}</Typography>
           ) : (
-            <Paper sx={{ 
-              width: "100%", 
-              flex: 1,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              mt: 2
-            }}>
+            <Paper sx={{ width: "100%", flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', mt: 2 }}>
               <TableContainer sx={{ flex: 1 }}>
                 <Table stickyHeader>
                   <TableHead>
@@ -242,78 +190,54 @@ const ListRequestsComponent = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {requests
-                      .slice((page - 1) * rowsPerPage, page * rowsPerPage)
-                      .map((row) => (
-                        <TableRow key={row.id}>
-                          <TableCell>{row.id}</TableCell>
-                          <TableCell>{row.partId}</TableCell>
-                          <TableCell>{row.name}</TableCell>
-                          <TableCell>{formatDate(row.createdAt)}</TableCell>
-                          <TableCell>{formatDate(row.updatedAt)}</TableCell>
-                          <TableCell>
-                            {editRowId === row.id ? (
-                              <Select
-                                value={tempStatus[row.id] || ""}
-                                onChange={(e) =>
-                                  setTempStatus((prev) => ({
-                                    ...prev,
-                                    [row.id]: e.target.value,
-                                  }))
-                                }
-                                fullWidth
-                                size="small"
-                              >
-                                {(validTransitions[row.status] || []).map((status) => (
-                                  <MenuItem key={status} value={status}>
-                                    {status}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            ) : (
-                              <Box
-                                sx={{
-                                  ...statusStyles[row.status],
-                                  padding: "5px 10px",
-                                  borderRadius: "5px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                {row.status}
-                              </Box>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {editRowId === row.id ? (
+                    {requests.slice((page - 1) * rowsPerPage, page * rowsPerPage).map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{row.id}</TableCell>
+                        <TableCell>{row.partId}</TableCell>
+                        <TableCell>{row.name}</TableCell>
+                        <TableCell>{formatDate(row.createdAt)}</TableCell>
+                        <TableCell>{formatDate(row.updatedAt)}</TableCell>
+                        <TableCell>
+                          {editRowId === row.id ? (
+                            <Select
+                              value={tempStatus[row.id] || ""}
+                              onChange={(e) => setTempStatus((prev) => ({ ...prev, [row.id]: e.target.value }))}
+                              fullWidth
+                              size="small"
+                            >
+                              {(validTransitions[row.status] || []).map((status) => (
+                                <MenuItem key={status} value={status}>{status}</MenuItem>
+                              ))}
+                            </Select>
+                          ) : (
+                            <Box sx={{ ...statusStyles[row.status], padding: "5px 10px", borderRadius: "5px", textAlign: "center" }}>
+                              {row.status}
+                            </Box>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {editRowId === row.id ? (
+                            <IconButton color="success" onClick={() => handleSave(row.id)} aria-label="save">
+                              <SaveIcon />
+                            </IconButton>
+                          ) : (
+                            <Box display="flex" gap={1}>
                               <IconButton
-                                color="success"
-                                onClick={() => handleSave(row.id)}
-                                aria-label="save"
+                                color="warning"
+                                onClick={() => handleEdit(row)}
+                                disabled={!validTransitions[row.status]?.length}
+                                aria-label="edit"
                               >
-                                <SaveIcon />
+                                <EditIcon />
                               </IconButton>
-                            ) : (
-                              <Box display="flex" gap={1}>
-                                <IconButton
-                                  color="warning"
-                                  onClick={() => handleEdit(row)}
-                                  disabled={!validTransitions[row.status]?.length}
-                                  aria-label="edit"
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                  color="error"
-                                  onClick={() => handleDelete(row.id)}
-                                  aria-label="delete"
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Box>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                              <IconButton color="error" onClick={() => handleDelete(row.id)} aria-label="delete">
+                                <DeleteIcon />
+                              </IconButton>
+                            </Box>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>

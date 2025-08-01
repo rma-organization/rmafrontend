@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -10,12 +11,12 @@ import {
   MenuItem,
 } from "@mui/material";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import { getInventoryById, updateInventory } from "../../../services/api/InventoryServices";
+import { getVendors } from "../../../services/api/commonService";
 
 const EditInventory = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
   const [formData, setFormData] = useState({});
   const [vendors, setVendors] = useState([]);
@@ -26,20 +27,21 @@ const EditInventory = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const inventoryRes = await axios.get(`${apiUrl}/api/inventory/${id}`);
+        const inventoryRes = await getInventoryById(id);
         setFormData(inventoryRes.data);
 
-        const vendorsRes = await axios.get(`${apiUrl}/api/vendors`);
-        setVendors(Array.isArray(vendorsRes.data) ? vendorsRes.data : []);
+        const vendorsData = await getVendors();
+        setVendors(Array.isArray(vendorsData) ? vendorsData : []);
       } catch (err) {
         console.error("Error fetching data:", err);
+        setError("Failed to fetch inventory or vendors.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [id, apiUrl]);
+  }, [id]);
 
   const handleInputChange = (field, value) => {
     setFormData((prevData) => ({ ...prevData, [field]: value }));
@@ -51,9 +53,7 @@ const EditInventory = () => {
     setSubmitting(true);
 
     try {
-      await axios.put(`${apiUrl}/api/inventory/${id}`, formData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      await updateInventory(id, formData);
       alert("Inventory updated successfully!");
       navigate("/InventoryManagement");
     } catch (error) {
@@ -75,10 +75,10 @@ const EditInventory = () => {
         <Typography variant="h6" fontWeight="bold" color="black">
           Edit Inventory Status
         </Typography>
-        <Button variant="contained" component={Link} to="/InventoryManagement">
+        <Button variant="contained" component={Link} to="/InventoryManagement" sx={{ mb: 2 }}>
           Back
         </Button>
-        <Paper sx={{ padding: 3, mt: 2 }}>
+        <Paper sx={{ padding: 3 }}>
           <form onSubmit={handleUpdate}>
             <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
               <Box flex={1}>
@@ -107,22 +107,27 @@ const EditInventory = () => {
                 ))}
               </Box>
               <Box flex={1}>
-                {["currency", "mitNumber", "itemType", "poNumber", "lotNumber", "description"].map(
-                  (field, index) => (
-                    <Box key={index} display="flex" alignItems="center" mb={2}>
-                      <Typography sx={{ width: "35%", minWidth: "120px" }}>
-                        {formatLabel(field)}
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        value={formData[field] ?? ""}
-                        onChange={(e) => handleInputChange(field, e.target.value)}
-                        multiline={field === "description"}
-                        rows={field === "description" ? 3 : 1}
-                      />
-                    </Box>
-                  )
-                )}
+                {[
+                  "currency",
+                  "mitNumber",
+                  "itemType",
+                  "poNumber",
+                  "lotNumber",
+                  "description",
+                ].map((field, index) => (
+                  <Box key={index} display="flex" alignItems="center" mb={2}>
+                    <Typography sx={{ width: "35%", minWidth: "120px" }}>
+                      {formatLabel(field)}
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      value={formData[field] ?? ""}
+                      onChange={(e) => handleInputChange(field, e.target.value)}
+                      multiline={field === "description"}
+                      rows={field === "description" ? 3 : 1}
+                    />
+                  </Box>
+                ))}
 
                 {/* Status Select */}
                 <Box display="flex" alignItems="center" mb={2}>

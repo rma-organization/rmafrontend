@@ -22,7 +22,9 @@ import {
   Edit as EditIcon,
   Save as SaveIcon,
 } from "@mui/icons-material";
-import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
+
+import { listRequests, updateRequest } from "../../../services/api/RequestServices";
+import { sendNotification } from "../../../services/api/NotificationServices";
 import { Link, useNavigate } from "react-router-dom";
 
 const ListRequestsComponent = () => {
@@ -63,21 +65,7 @@ const ListRequestsComponent = () => {
   const handleSave = async (rowId) => {
     try {
       const updatedStatus = tempStatus[rowId];
-      const token = localStorage.getItem("token");
-      const username = localStorage.getItem("username");
-
-      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: updatedStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update request.");
-      }
+      await updateRequest(rowId, { status: updatedStatus });
 
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
@@ -87,17 +75,17 @@ const ListRequestsComponent = () => {
       setEditRowId(null);
       setSuccessMessage("Request updated successfully!");
 
-      // Send Notification to engineer with correct 'requestsId' key
+      const username = localStorage.getItem("username") || "system";
       const message = `Request ID ${rowId} status updated to ${updatedStatus}`;
+
       await sendNotification({
         receiverRole: "engineer",
         message,
         type: "STATUS_UPDATE",
         status: updatedStatus,
-        senderUsername: username || "system",
-        requestsId: rowId, // <-- Correct key for backend
+        senderUsername: username,
+        requestsId: rowId,
       });
-      
     } catch (error) {
       console.error("Error updating request or sending notification:", error);
       setError("Failed to update request or send notification.");

@@ -2,50 +2,35 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import jwtDecode from "jwt-decode";
 import "../styles/LoginPage.css";
-
 import logoPath from "../../../assets/logo.png";
 import backgroundPath from "../../../assets/background.png";
+import { loginUser } from "../../../services/api/authService";
 
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [error, setError] = useState("");
-
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError("");
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role }),
-      });
+      // Destructure data from axios response
+      const { data } = await loginUser({ username, password, role });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Invalid credentials.");
-      }
-
-      const data = await response.json();
-
-      // Decode JWT token to get username (subject)
       const decodedToken = jwtDecode(data.token);
       const decodedUsername = decodedToken.sub || username;
 
-      // Save JWT token, role, and username in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
       localStorage.setItem("username", decodedUsername);
 
-      // Notify parent component about successful login
       onLogin({ token: data.token, role: data.role });
-    } catch (error) {
-      console.error("Login Error:", error);
-      setError(error.message);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Invalid credentials.");
     }
   };
 
@@ -58,7 +43,6 @@ const LoginPage = ({ onLogin }) => {
         height: "100vh",
       }}
     >
-      {/* Logo */}
       <img src={logoPath} alt="Millennium IT" className="logo" />
       <h2 className="login-heading">RMA Web Application</h2>
 

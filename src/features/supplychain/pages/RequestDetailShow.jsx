@@ -16,8 +16,8 @@ import { styled } from "@mui/material/styles";
 import { tableCellClasses } from "@mui/material/TableCell";
 import { Link, useParams } from "react-router-dom";
 
-import { getRequestById } from "../../../services/api/InventoryServices";
-
+//import { getRequestById } from "../../../services/api/InventoryServices";
+import { getRequestById } from "../../../services/api/RequestServices";
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.primary.dark,

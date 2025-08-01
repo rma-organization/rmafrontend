@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -15,15 +16,19 @@ import {
   Snackbar,
   CircularProgress,
   Pagination,
-  IconButton
+  IconButton,
 } from "@mui/material";
 import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
-  Save as SaveIcon
+  Save as SaveIcon,
 } from "@mui/icons-material";
-import { listRequests, sendNotification } from "../../../services/api/InventoryServices";
+
+import { listRequests, updateRequest } from "../../../services/api/RequestServices";
+import { sendNotification } from "../../../services/api/NotificationServices";
+
 import { Link, useNavigate } from "react-router-dom";
+
 
 const PartRequestManagementRMA = () => {
   const [requests, setRequests] = useState([]);
@@ -62,21 +67,10 @@ const PartRequestManagementRMA = () => {
   const handleSave = async (rowId) => {
     try {
       const updatedStatus = tempStatus[rowId];
-      const token = localStorage.getItem("token");
 
-      // Update request status
-      const response = await fetch(`http://localhost:8080/api/requests/${rowId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: updatedStatus }),
-      });
+      // Update request status via API
+      await updateRequest(rowId, { status: updatedStatus });
 
-      if (!response.ok) throw new Error("Failed to update request.");
-
-      // Update state
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
           req.id === rowId ? { ...req, status: updatedStatus } : req
@@ -85,16 +79,17 @@ const PartRequestManagementRMA = () => {
       setEditRowId(null);
       setSuccessMessage("Request updated successfully!");
 
-      // 🔔 Send notification using your service method
+      // Send notification to engineers
       await sendNotification({
         receiverRole: "engineer",
         message: `RMA request #${rowId} marked as ${updatedStatus}.`,
         type: "REQUEST",
         status: updatedStatus,
-        requestsId: rowId, 
+        requestsId: rowId,
       });
     } catch (error) {
-      console.error("Error updating request:", error);
+      console.error("Error updating request or sending notification:", error);
+      setError("Failed to update request or send notification.");
     }
   };
 
@@ -105,10 +100,16 @@ const PartRequestManagementRMA = () => {
   const formatDate = (dateString) =>
     dateString ? new Date(dateString).toLocaleDateString() : "N/A";
 
-  const handleCloseSnackbar = () => setSuccessMessage(null);
+  const handleCloseSnackbar = () => {
+    setSuccessMessage(null);
+    setError(null);
+  };
   const handlePageChange = (_, newPage) => setPage(newPage);
 
-  const paginatedRequests = requests.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const paginatedRequests = requests.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
   const totalPages = Math.ceil(requests.length / rowsPerPage);
 
   const statusStyles = {
@@ -126,18 +127,18 @@ const PartRequestManagementRMA = () => {
   return (
     <>
       <Snackbar
-        open={Boolean(successMessage)}
+        open={Boolean(successMessage) || Boolean(error)}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        message={successMessage}
+        message={successMessage || error}
       />
       <Box p={2} mt={10}>
         <Button variant="contained" component={Link} to="/rma-home">
           Home
         </Button>
 
-        <Box bgcolor="lightgray" p={2} mt={10} borderRadius={1}>
-          <Typography variant="h6" fontWeight="bold" color="black" mt={4}>
+        <Box bgcolor="lightgray" p={2} mt={4} borderRadius={1}>
+          <Typography variant="h6" fontWeight="bold" color="black" mb={2}>
             Requests List
           </Typography>
 
@@ -176,7 +177,10 @@ const PartRequestManagementRMA = () => {
                               <Select
                                 value={tempStatus[row.id] || "Completed"}
                                 onChange={(e) =>
-                                  setTempStatus({ ...tempStatus, [row.id]: e.target.value })
+                                  setTempStatus({
+                                    ...tempStatus,
+                                    [row.id]: e.target.value,
+                                  })
                                 }
                                 fullWidth
                                 size="small"
@@ -186,8 +190,11 @@ const PartRequestManagementRMA = () => {
                             ) : (
                               <Box
                                 sx={{
-                                  backgroundColor: statusStyles[row.status]?.backgroundColor || "#ccc",
-                                  color: statusStyles[row.status]?.color || "#000",
+                                  backgroundColor:
+                                    statusStyles[row.status]?.backgroundColor ||
+                                    "#ccc",
+                                  color:
+                                    statusStyles[row.status]?.color || "#000",
                                   padding: "4px 8px",
                                   borderRadius: "4px",
                                   display: "inline-block",

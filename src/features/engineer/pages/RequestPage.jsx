@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -11,6 +12,19 @@ import {
   Alert,
   Autocomplete,
 } from "@mui/material";
+
+import {
+  createRequest,
+  updateRequest,
+  getRequestById,
+} from "../../../services/api/RequestServices";
+import {
+  getVendors,
+  getCustomers,
+  searchInventoryParts,
+} from "../../../services/api/InventoryServices";
+
+
 
 const RequestPage = () => {
   const navigate = useNavigate();
@@ -44,19 +58,10 @@ const RequestPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [vendorRes, customerRes] = await Promise.all([
-          fetch("http://localhost:8080/api/vendors"),
-          fetch("http://localhost:8080/api/customers"),
+        const [vendorData, customerData] = await Promise.all([
+          getVendors(),
+          getCustomers(),
         ]);
-
-        if (!vendorRes.ok || !customerRes.ok) {
-          setError("Failed to load vendors or customers.");
-          setLoading(false);
-          return;
-        }
-
-        const vendorData = await vendorRes.json();
-        const customerData = await customerRes.json();
 
         setVendors(vendorData);
         setCustomers(customerData);
@@ -67,25 +72,18 @@ const RequestPage = () => {
             vendor: vendorData[0]?.id || "",
             customer: customerData[0]?.id || "",
           }));
-        }
-
-        if (id) {
-          const reqRes = await fetch(`http://localhost:8080/api/requests/${id}`);
-          if (reqRes.ok) {
-            const reqData = await reqRes.json();
-            setFormData({
-              ...reqData,
-              vendor: reqData.vendor?.id || "",
-              customer: reqData.customer?.id || "",
-              partId: reqData.partId || "",
-            });
-          } else {
-            setError("Failed to load request details.");
-          }
+        } else {
+          const { data: reqData } = await getRequestById(id);
+          setFormData({
+            ...reqData,
+            vendor: reqData.vendor?.id || "",
+            customer: reqData.customer?.id || "",
+            partId: reqData.partId || "",
+          });
         }
       } catch (err) {
         console.error(err);
-        setError("Error fetching data.");
+        setError("Failed to load data.");
       } finally {
         setLoading(false);
       }
@@ -102,17 +100,8 @@ const RequestPage = () => {
 
     setPartLoading(true);
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/inventory/search?query=${encodeURIComponent(term)}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setPartSuggestions(data);
-      } else {
-        const errorText = await res.text();
-        console.error("Error response from server:", res.status, errorText);
-        setPartSuggestions([]);
-      }
+      const data = await searchInventoryParts(term);
+      setPartSuggestions(data);
     } catch (err) {
       console.error("Part fetch error:", err);
       setPartSuggestions([]);
@@ -154,14 +143,8 @@ const RequestPage = () => {
 
   const handlePartInputChange = (event, value) => {
     fetchPartSuggestions(value);
-    setErrors((prev) => ({
-      ...prev,
-      partId: !value,
-    }));
-    setFormData((prev) => ({
-      ...prev,
-      partId: value,
-    }));
+    setErrors((prev) => ({ ...prev, partId: !value }));
+    setFormData((prev) => ({ ...prev, partId: value }));
   };
 
   const handlePartSelect = (event, value) => {
@@ -169,14 +152,8 @@ const RequestPage = () => {
       typeof value === "string"
         ? value
         : value?.inBoxPartNumber || value?.boxPartNumber || "";
-    setFormData((prev) => ({
-      ...prev,
-      partId: selected,
-    }));
-    setErrors((prev) => ({
-      ...prev,
-      partId: !selected,
-    }));
+    setFormData((prev) => ({ ...prev, partId: selected }));
+    setErrors((prev) => ({ ...prev, partId: !selected }));
   };
 
   const validateForm = () => {
@@ -219,47 +196,22 @@ const RequestPage = () => {
     if (!id) payload.createdAt = new Date().toISOString();
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(
-        id
-          ? `http://localhost:8080/api/requests/${id}`
-          : "http://localhost:8080/api/requests",
-        {
-          method: id ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (response.ok) {
-        alert("Request submitted successfully!");
-        navigate(-1);
+      if (id) {
+        await updateRequest(id, payload);
       } else {
-        const errText = await response.text();
-        console.error("Error:", errText);
-        alert("Failed to submit request.");
+        await createRequest(payload);
       }
+
+      alert("Request submitted successfully!");
+      navigate(-1);
     } catch (err) {
       console.error("Submit error:", err);
-      alert("Network error.");
+      alert("Failed to submit request.");
     }
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        p: 3,
-        bgcolor: "#fff",
-        height: "100%",
-      }}
-    >
-      {/* Back button */}
+    <Box sx={{ display: "flex", flexDirection: "column", p: 3, bgcolor: "#fff" }}>
       <Button
         variant="contained"
         onClick={() => navigate(-1)}
@@ -268,7 +220,6 @@ const RequestPage = () => {
         ← Back
       </Button>
 
-      {/* Form title */}
       <Typography variant="h6" sx={{ mb: 3 }}>
         {id ? "Edit Request" : "Add New Request"}
       </Typography>
@@ -282,13 +233,9 @@ const RequestPage = () => {
           {error}
         </Alert>
       ) : (
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ display: "flex", flexDirection: "column", gap: 3 }}
-        >
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Box sx={{ display: "flex", gap: 3 }}>
-            {/* Left column */}
+            {/* Left Column */}
             <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
               {[
                 ["name", "Name"],
@@ -305,13 +252,7 @@ const RequestPage = () => {
                   value={formData[name]}
                   onChange={handleChange}
                   error={errors[name]}
-                  helperText={
-                    errors[name]
-                      ? name === "mailIds"
-                        ? "Invalid email format"
-                        : "Invalid value"
-                      : ""
-                  }
+                  helperText={errors[name] ? (name === "mailIds" ? "Invalid email format" : "Invalid value") : ""}
                   size="small"
                   InputLabelProps={{ style: { fontSize: "0.875rem" } }}
                 />
@@ -334,16 +275,8 @@ const RequestPage = () => {
 
             <Divider orientation="vertical" flexItem />
 
-            {/* Right column */}
-            <Box
-              sx={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                pl: 3,
-              }}
-            >
+            {/* Right Column */}
+            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, pl: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -354,7 +287,6 @@ const RequestPage = () => {
                 error={errors.vendor}
                 helperText={errors.vendor ? "Required" : ""}
                 size="small"
-                InputLabelProps={{ style: { fontSize: "0.875rem" } }}
               >
                 {vendors.map((v) => (
                   <MenuItem key={v.id} value={v.id}>
@@ -373,7 +305,6 @@ const RequestPage = () => {
                 error={errors.customer}
                 helperText={errors.customer ? "Required" : ""}
                 size="small"
-                InputLabelProps={{ style: { fontSize: "0.875rem" } }}
               >
                 {customers.map((c) => (
                   <MenuItem key={c.id} value={c.id}>
@@ -401,7 +332,6 @@ const RequestPage = () => {
                     error={errors.partId}
                     helperText={errors.partId ? "Required" : ""}
                     size="small"
-                    InputLabelProps={{ style: { fontSize: "0.875rem" } }}
                     InputProps={{
                       ...params.InputProps,
                       endAdornment: (
@@ -422,12 +352,7 @@ const RequestPage = () => {
             </Box>
           </Box>
 
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            sx={{ mt: 2, py: 1.5, fontSize: "0.875rem" }}
-          >
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2, py: 1.5, fontSize: "0.875rem" }}>
             {id ? "Update Request" : "Submit Request"}
           </Button>
         </Box>

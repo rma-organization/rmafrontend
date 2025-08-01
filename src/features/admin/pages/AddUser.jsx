@@ -1,3 +1,5 @@
+
+// export default AddUser;
 import React, { useEffect, useState } from "react";
 import {
   Table, TableBody, TableCell, TableContainer,
@@ -6,73 +8,42 @@ import {
   MenuItem, Select
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-
-// Optional role mapping for display (you can use it if you want)
-const roleMapping = {
-  ADMIN: "System Admin",
-  ENGINEER: "Engineer",
-  SUPPLYCHAIN: "Supply Chain Team",
-  RMA: "RMA",
-};
+import { fetchPendingUsers, approveUser } from "../../../services/api/authService";
 
 const AddUser = () => {
-  // State to store pending users
   const [users, setUsers] = useState([]);
-
-  // Form state for selected username and status
   const [username, setUsername] = useState("");
   const [status, setStatus] = useState("PENDING");
-
   const navigate = useNavigate();
 
-  // Fetch users on component mount
+  // Load pending users on mount
   useEffect(() => {
-    fetchPendingUsers();
+    const loadPendingUsers = async () => {
+      try {
+        const res = await fetchPendingUsers();
+        setUsers(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+        setUsers([]);
+      }
+    };
+    loadPendingUsers();
   }, []);
 
-  // Get pending users from backend
-  const fetchPendingUsers = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/api/auth/pending-users", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await response.json();
-      setUsers(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching data:", error.message);
-      setUsers([]);
-    }
-  };
+  const handleUsernameChange = (e) => setUsername(e.target.value);
+  const handleStatusChange = (e) => setStatus(e.target.value);
 
-  // Form input handlers
-  const handleUsernameChange = (event) => setUsername(event.target.value);
-  const handleStatusChange = (event) => setStatus(event.target.value);
-
-  // Populate form with selected user's data
   const handleFillFields = (user) => {
     setUsername(user.username);
     setStatus(user.approvalStatus);
   };
 
-  // Send approval decision to backend
   const handleApproveUser = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/auth/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, approvalStatus: status }),
-      });
-
-      if (response.ok) {
-        // Remove approved user from table
-        setUsers(users.filter(user => user.username !== username));
-        setUsername("");
-        setStatus("PENDING");
-      } else {
-        const errorMsg = await response.text();
-        console.error("Failed to approve user:", errorMsg);
-      }
+      await approveUser(username, status);
+      setUsers(users.filter(user => user.username !== username));
+      setUsername("");
+      setStatus("PENDING");
     } catch (error) {
       console.error("Error approving user:", error.message);
     }
@@ -80,14 +51,14 @@ const AddUser = () => {
 
   return (
     <Box p={2} mt={1}>
-      <Button variant="contained" disableElevation onClick={() => navigate("/admin-home")}>Home</Button>
+      <Button variant="contained" disableElevation onClick={() => navigate("/admin-home")}>
+        Home
+      </Button>
       <Card sx={{ maxWidth: "1100px", margin: "auto", mt: 4, padding: "20px", backgroundColor: "#f5f5f5" }}>
         <CardContent>
-          {/* Header */}
           <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
             <Typography variant="h6">Approve User</Typography>
           </Box>
-          {/* User input form */}
           <Grid container spacing={3}>
             <Grid item xs={6}>
               <TextField
@@ -111,7 +82,6 @@ const AddUser = () => {
               </Select>
             </Grid>
           </Grid>
-          {/* Approve button */}
           <Button
             variant="contained"
             fullWidth
@@ -121,25 +91,25 @@ const AddUser = () => {
             Approve User
           </Button>
         </CardContent>
-        {/* Table of pending users */}
+
         <Paper sx={{ width: "100%", mt: 4, p: { xs: 1, sm: 2 } }}>
           <TableContainer sx={{ maxHeight: 320, overflowY: "auto", overflowX: "auto" }}>
             <Table stickyHeader sx={{ minWidth: 400 }} size="small" aria-label="pending users table">
               <TableHead>
                 <TableRow>
-                  <TableCell variant="head" align="left" sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 50 }}>ID</TableCell>
-                  <TableCell variant="head" align="left" sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 120, wordBreak: "break-word", whiteSpace: "pre-line" }}>Username</TableCell>
-                  <TableCell variant="head" align="left" sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 120, wordBreak: "break-word", whiteSpace: "pre-line" }}>Roles</TableCell>
-                  <TableCell variant="head" align="left" sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 100 }}>Action</TableCell>
+                  <TableCell sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 50 }}>ID</TableCell>
+                  <TableCell sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 120 }}>Username</TableCell>
+                  <TableCell sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 120 }}>Roles</TableCell>
+                  <TableCell sx={{ backgroundColor: "DarkGray", fontWeight: "bold", minWidth: 100 }}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.filter(user => user.approvalStatus === "PENDING").map(user => (
+                {users.filter(u => u.approvalStatus === "PENDING").map(user => (
                   <TableRow key={user.id}>
-                    <TableCell align="left" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>{user.id}</TableCell>
-                    <TableCell align="left" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>{user.username}</TableCell>
-                    <TableCell align="left" sx={{ wordBreak: "break-word", whiteSpace: "pre-line" }}>{user.roles.join(", ")}</TableCell>
-                    <TableCell align="left">
+                    <TableCell>{user.id}</TableCell>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.roles.join(", ")}</TableCell>
+                    <TableCell>
                       <Button onClick={() => handleFillFields(user)}>Select</Button>
                     </TableCell>
                   </TableRow>

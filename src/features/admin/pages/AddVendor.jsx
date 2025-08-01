@@ -13,11 +13,9 @@ import {
   TableRow,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../services/api/axios";
 
 const AddVendor = () => {
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
-
   const [formData, setFormData] = useState({ name: "" });
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
@@ -28,7 +26,7 @@ const AddVendor = () => {
   useEffect(() => {
     const fetchVendors = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/api/vendors`);
+        const response = await axiosInstance.get("/api/vendors");
         setVendors(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching vendors:", error);
@@ -36,7 +34,7 @@ const AddVendor = () => {
       }
     };
     fetchVendors();
-  }, [apiUrl]);
+  }, []);
 
   const handleChange = (event) => {
     setFormData({ ...formData, [event.target.name]: event.target.value || "" });
@@ -55,9 +53,7 @@ const AddVendor = () => {
     }
 
     try {
-      const response = await axios.post(`${apiUrl}/api/vendors`, formData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await axiosInstance.post("/api/vendors", formData);
       setVendors((prev) => [...prev, response.data]);
       setFormData({ name: "" });
       setSuccessMessage("Vendor added successfully!");
@@ -73,7 +69,7 @@ const AddVendor = () => {
     setError(null);
     setSuccessMessage("");
     try {
-      await axios.delete(`${apiUrl}/api/vendors/${vendorId}`);
+      await axiosInstance.delete(`/api/vendors/${vendorId}`);
       setVendors((prevVendors) => prevVendors.filter((vendor) => vendor.id !== vendorId));
       setSuccessMessage("Vendor deleted successfully!");
     } catch (error) {

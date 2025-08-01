@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -15,10 +16,7 @@ import {
 import { styled } from "@mui/material/styles";
 import { tableCellClasses } from "@mui/material/TableCell";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { getInventoryById } from "../../../services/api/InventoryServices";
-import axios from "axios";
-
-const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+import { getInventoryById, getVendors } from "../../../services/api/InventoryServices";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -64,8 +62,8 @@ const InventoryDetailsShow = () => {
   useEffect(() => {
     const fetchVendors = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/api/vendors`);
-        setVendors(Array.isArray(response.data) ? response.data : []);
+        const data = await getVendors();
+        setVendors(data);
       } catch (error) {
         console.error("❌ Error fetching vendors:", error);
         setVendors([]);
@@ -110,7 +108,6 @@ const InventoryDetailsShow = () => {
   }
 
   if (!inventoryItem) {
-    console.warn("No inventory item found for ID:", id);
     return (
       <Box p={2} mt={10}>
         <Typography variant="h6" color="error">

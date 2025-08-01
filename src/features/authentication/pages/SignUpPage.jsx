@@ -1,10 +1,11 @@
+// export default SignUpPage;
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaEnvelope, FaLock, FaUsers, FaCheck, FaEye, FaEyeSlash } from "react-icons/fa";
 import "../styles/SignUpPage.css";
-
 import logoPath from "../../../assets/logo.png";
 import backgroundPath from "../../../assets/background.png";
+import { registerUser } from "../../../services/api/authService";
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -56,36 +57,17 @@ const SignUpPage = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const apiURL = "http://localhost:8080/api/auth/register";
-
     try {
-      // Optional pre-flight check
-      const testResponse = await fetch(apiURL, { method: "OPTIONS" });
-      if (!testResponse.ok) {
-        throw new Error(`Server not reachable. Status: ${testResponse.status}`);
-      }
-
-      const response = await fetch(apiURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          roles: formData.role,
-        }),
+      await registerUser({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        roles: formData.role,
       });
-
-      if (response.ok) {
-        alert("Signup successful!");
-        navigate("/login");
-      } else {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.message || "Signup failed. Please try again."}`);
-      }
+      alert("Signup successful!");
+      navigate("/login");
     } catch (error) {
-      console.error("Error signing up:", error);
-      alert("An unexpected error occurred. Please try again later.");
+      alert(error.response?.data?.message || error.message || "Signup failed. Please try again.");
     }
   };
 
@@ -134,7 +116,6 @@ const SignUpPage = () => {
             {errors.email && <small className="error-text">{errors.email}</small>}
           </div>
 
-          {/* Password Field with Toggle */}
           <div className="input-group" style={{ position: "relative" }}>
             <FaLock className="icon" />
             <input

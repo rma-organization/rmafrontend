@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   PieChart,
@@ -22,9 +23,11 @@ import {
 } from "@mui/material";
 import WavingHandIcon from "@mui/icons-material/WavingHand";
 import SearchIcon from "@mui/icons-material/Search";
-import axiosInstance from "../../../services/api/axios";
 import jwtDecode from "jwt-decode";
-import { searchInventoryBySerial } from "../../../services/api/axios"; // Ensure path correct
+
+// Import the API functions (assuming from your services directory)
+import { searchInventoryBySerial } from "../../../services/api/InventoryServices";
+import { listRequests } from "../../../services/api/RequestServices";
 
 const COLORS = ["#4CAF50", "#F44336", "#FFC107", "#2196F3"];
 
@@ -58,9 +61,7 @@ const RequestStatusChart = () => {
     const value = e.target.value;
     setSearchQuery(value);
 
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
 
     searchTimeoutRef.current = setTimeout(async () => {
       if (value.trim().length > 0) {
@@ -86,21 +87,19 @@ const RequestStatusChart = () => {
     setMenuAnchorEl(null);
   };
 
-  // Clear debounce timeout on unmount
+  // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
   }, []);
 
-  // Fetch status counts
+  // Fetch requests status counts
   useEffect(() => {
-    axiosInstance
-      .get("/api/requests")
-      .then((response) => {
-        const requests = response.data;
+    const fetchStatusCounts = async () => {
+      try {
+        const requests = await listRequests();
+
         const statusCount = {
           Approved: 0,
           Rejected: 0,
@@ -121,12 +120,14 @@ const RequestStatusChart = () => {
           { name: "At Office", value: statusCount["At Office"] },
           { name: "En Route", value: statusCount["En Route"] },
         ]);
-        setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching requests data:", error);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchStatusCounts();
   }, []);
 
   return (
@@ -210,13 +211,7 @@ const RequestStatusChart = () => {
           }}
         >
           {searchResults.slice(0, 5).map((item) => (
-            <MenuItem
-              key={item.id}
-              onClick={() => {
-                // You can add more behavior here on click
-                handleMenuClose();
-              }}
-            >
+            <MenuItem key={item.id} onClick={handleMenuClose}>
               <Box>
                 <Typography variant="body2" fontWeight="bold">
                   Serial: {item.inBoxSerialNumber}
@@ -352,5 +347,3 @@ const RequestStatusChart = () => {
 };
 
 export default RequestStatusChart;
-
-

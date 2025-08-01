@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import axiosInstance from "../../../services/api/axios"; // ✅ Use centralized axios instance
+import axiosInstance from "../../../services/api/axios"; 
 
 const AddCustomer = () => {
   const [formData, setFormData] = useState({ name: "" });
