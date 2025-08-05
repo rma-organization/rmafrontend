@@ -19,18 +19,18 @@ const AddCustomer = () => {
   const [formData, setFormData] = useState({ name: "" });
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-  const [vendors, setVendors] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [deletingVendorId, setDeletingVendorId] = useState(null);
+  const [deletingCustomerId, setDeletingCustomerId] = useState(null);
 
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
         const response = await axiosInstance.get("/api/customers");
-        setVendors(Array.isArray(response.data) ? response.data : []);
+        setCustomers(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching customers:", error);
-        setVendors([]);
+        setCustomers([]);
       }
     };
     fetchCustomers();
@@ -54,7 +54,7 @@ const AddCustomer = () => {
 
     try {
       const response = await axiosInstance.post("/api/customers", formData);
-      setVendors((prev) => [...prev, response.data]);
+      setCustomers((prev) => [...prev, response.data]);
       setFormData({ name: "" });
       setSuccessMessage("Customer added successfully!");
     } catch (error) {
@@ -65,17 +65,17 @@ const AddCustomer = () => {
   };
 
   const handleDelete = async (customerId) => {
-    setDeletingVendorId(customerId);
+    setDeletingCustomerId(customerId);
     setError(null);
     setSuccessMessage("");
     try {
       await axiosInstance.delete(`/api/customers/${customerId}`);
-      setVendors((prevVendors) => prevVendors.filter((customer) => customer.id !== customerId));
+      setCustomers((prevCustomers) => prevCustomers.filter((customer) => customer.id !== customerId));
       setSuccessMessage("Customer deleted successfully!");
     } catch (error) {
       setError(error.response?.data || "Failed to delete customer. Please try again.");
     } finally {
-      setDeletingVendorId(null);
+      setDeletingCustomerId(null);
     }
   };
 
@@ -151,25 +151,25 @@ const AddCustomer = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {vendors.map((vendor) => (
-                  <TableRow key={vendor.id}>
+                {customers.map((customers) => (
+                  <TableRow key={customers.id}>
                     <TableCell component="th" scope="row">
-                      {vendor.id}
+                      {customers.id}
                     </TableCell>
-                    <TableCell align="right">{vendor.name}</TableCell>
+                    <TableCell align="right">{customers.name}</TableCell>
                     <TableCell align="right">
                       <Button
                         variant="contained"
                         color="error"
-                        onClick={() => handleDelete(vendor.id)}
-                        disabled={deletingVendorId === vendor.id}
+                        onClick={() => handleDelete(customers.id)}
+                        disabled={deletingCustomerId === customers.id}
                       >
-                        {deletingVendorId === vendor.id ? "Deleting..." : "Delete"}
+                        {deletingCustomerId === customers.id ? "Deleting..." : "Delete"}
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
-                {vendors.length === 0 && (
+                {customers.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} align="center">
                       No customers found.
