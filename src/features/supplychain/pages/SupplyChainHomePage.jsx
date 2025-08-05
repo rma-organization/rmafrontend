@@ -230,7 +230,7 @@ const RequestStatusChart = () => {
       <Box
         sx={{
           width: "100%",
-          maxWidth: 500,
+          maxWidth: 600,
           flex: 1,
           display: "flex",
           flexDirection: "column",
